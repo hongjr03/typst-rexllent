@@ -1,4 +1,4 @@
-#let xml-parser(xmlPath, worksheetName) = {
+#let xml-parser(xmlPath, worksheet: "Sheet1") = {
   let find-child(elem, tag) = {
     elem.children.find(e => "tag" in e and e.tag == tag)
   }
@@ -8,7 +8,7 @@
     let styles = find-child(data, "Styles")
     let worksheets = data.children.filter(e => if "tag" in e { e.tag == "Worksheet" } else { false })
     let worksheet = worksheets.find(e => {
-      e.attrs.Name == worksheetName
+      e.attrs.Name == worksheet
     })
     let styles-dict = find-child(data, "Styles")
       .children
@@ -144,7 +144,7 @@
 }
 
 
-#let xml-table = xml-parser("test-table.xml", "Sheet1")
+#let xml-table = xml-parser("test-table.xml", worksheet: "Sheet1")
 #table(
   columns: xml-table.columns,
   rows: xml-table.rows,
