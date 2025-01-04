@@ -1,17 +1,18 @@
 #import "src/lib.typ": worksheets-parser, worksheet-parser
 
-#worksheets-parser(
-  "/test-table.xml",
+#let sheets = worksheets-parser(
+  xmlPath: "/test-table.xml",
+  to-array: true,
   // below args will be passed to worksheet-parser
   with-table-styles: false,
   with-table-alignment: false,
   columns: (1fr, 1fr),
   rows: 4em,
-  align: center+horizon,
+  align: center + horizon,
   stroke: yellow,
 )
 
-#pagebreak()
+#sheets.first()
 
 #worksheet-parser(
   xmlPath: "/test-table.xml",
@@ -21,6 +22,6 @@
   // if with-table-styles is false, then below args will be passed to table
   columns: (1fr, 1fr),
   // rows: 4em,
-  align: center+horizon,
+  align: center + horizon,
   stroke: yellow,
 )
