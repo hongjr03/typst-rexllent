@@ -10,7 +10,7 @@ Pure typst implementation of converting XML Excel table to typst table.
 Start by importing the package:
 
 ```typ
-#import "src/lib.typ": worksheets-parser, worksheet-parser
+#import "@preview/exmllent:0.1.0": worksheets-parser, worksheet-parser
 ```
 
 Then you can use the `worksheets-parser` and `worksheet-parser` functions to convert your XML Excel table to typst table.
@@ -19,7 +19,7 @@ With `worksheets-parser` you can convert all worksheets in the XML file to typst
 
 ```typ
 #worksheets-parser(
-  xmlPath: "/test-table.xml",
+  xml-path: "/test-table.xml",
   to-array: true, // default is false
   // below args will be passed to worksheet-parser
   with-table-styles: false,
@@ -35,7 +35,7 @@ With `worksheet-parser` you can convert a specific worksheet in the XML file to 
 
 ```typ
 #worksheet-parser(
-  xmlPath: "/test-table.xml",
+  xml-path: "/test-table.xml",
   worksheet: "Sheet2",
   with-table-styles: false,
   with-table-alignment: false,

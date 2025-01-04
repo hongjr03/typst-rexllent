@@ -1,7 +1,7 @@
 #import "src/lib.typ": worksheets-parser, worksheet-parser
 
 #let sheets = worksheets-parser(
-  xmlPath: "/test-table.xml",
+  xml-path: "/test-table.xml",
   to-array: true,
   // below args will be passed to worksheet-parser
   with-table-styles: false,
@@ -15,7 +15,7 @@
 #sheets.first()
 
 #worksheet-parser(
-  xmlPath: "/test-table.xml",
+  xml-path: "/test-table.xml",
   worksheet: "Sheet2",
   with-table-styles: false,
   with-table-alignment: false,

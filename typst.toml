@@ -1,5 +1,5 @@
 [package]
-name = "eXMLlent"
+name = "exmllent"
 version = "0.1.0"
 entrypoint = "lib.typ"
 authors = ["hongjr03 <https://github.com/hongjr03>"]
