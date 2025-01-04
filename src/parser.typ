@@ -154,16 +154,28 @@
 }
 
 #let worksheets-parser(
-  xmlPath,
+  xmlPath: none,
+  to-array: false,
   ..args,
 ) = {
   let (worksheets, styles) = xml-to-worksheets(xmlPath)
   for worksheet in worksheets {
-    worksheet-parser(
-      worksheets: worksheets,
-      styles: styles,
-      worksheet: worksheet.attrs.Name,
-      ..args,
-    )
+    if to-array {
+      (
+        worksheet-parser(
+          worksheets: worksheets,
+          styles: styles,
+          worksheet: worksheet.attrs.Name,
+          ..args,
+        ),
+      )
+    } else {
+      worksheet-parser(
+        worksheets: worksheets,
+        styles: styles,
+        worksheet: worksheet.attrs.Name,
+        ..args,
+      )
+    }
   }
 }
