@@ -1,4 +1,4 @@
-#import "src/lib.typ": worksheets-parser, worksheet-parser
+#import "@preview/exmllent:0.1.0": worksheets-parser, worksheet-parser
 
 #let sheets = worksheets-parser(
   xml-workbook: xml("/test-table.xml"),
