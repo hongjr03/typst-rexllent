@@ -1,1 +1,4 @@
 dist
+.venv
+test.*
+target
