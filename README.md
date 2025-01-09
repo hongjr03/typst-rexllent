@@ -24,6 +24,10 @@ By passing `sheet-index` parameter, you can specify the sheet index to parse. Th
 
 Toggling the parameters `parse_table_style`, `parse_alignment`, and `parse_font_style` to `false` will disable parsing of table styles, alignment, and font styles respectively.
 
+| Sheet in Excel | Table in Typst | Table in Typst (without table styles) | Table in Typst (without alignment) | Table in Typst (without font styles) |
+| --- | --- | --- | --- | --- |
+| ![Sheet in Excel](assets/excel.png) | ![Table in Typst](assets/example1.png) | ![Table in Typst (without table styles)](assets/example2.png) | ![Table in Typst (without alignment)](assets/example3.png) | ![Table in Typst (without font styles)](assets/example4.png) |
+
 Have fun!
 
 ## Credits
