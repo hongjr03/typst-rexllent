@@ -22,7 +22,7 @@ By passing `sheet-index` parameter, you can specify the sheet index to parse. Th
 #xlsx-parser(read("test.xlsx", encoding: none), sheet-index: 1)
 ```
 
-Toggling the parameters `parse_table_style`, `parse_alignment`, and `parse_font_style` to `false` will disable parsing of table styles, alignment, and font styles respectively.
+Toggling the parameters `parse-table-style`, `parse-alignment`, and `parse-font-style` to `false` will disable parsing of table styles, alignment, and font styles respectively.
 
 | Sheet in Excel | Table in Typst | Table in Typst (without table styles) | Table in Typst (without alignment) | Table in Typst (without font styles) |
 | --- | --- | --- | --- | --- |
