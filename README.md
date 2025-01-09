@@ -22,6 +22,8 @@ By passing `sheet-index` parameter, you can specify the sheet index to parse. Th
 #xlsx-parser(read("test.xlsx", encoding: none), sheet-index: 1)
 ```
 
+Toggling the parameters `parse_table_style`, `parse_alignment`, and `parse_font_style` to `false` will disable parsing of table styles, alignment, and font styles respectively.
+
 Have fun!
 
 ## Credits
