@@ -1613,6 +1613,8 @@ version = "0.1.0"
 dependencies = [
  "ciborium",
  "getrandom",
+ "serde",
+ "toml",
  "umya-spreadsheet",
  "wasm-minimal-protocol",
 ]

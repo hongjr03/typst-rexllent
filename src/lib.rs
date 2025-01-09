@@ -14,11 +14,78 @@ register_custom_getrandom!(always_fail);
 
 use std::io::Cursor;
 use umya_spreadsheet::{
-    reader, Cell, HorizontalAlignmentValues, Spreadsheet, VerticalAlignmentValues, Worksheet,
+    reader, Cell, HorizontalAlignmentValues, Spreadsheet, UnderlineValues, VerticalAlignmentValues,
+    Worksheet,
 };
 use wasm_minimal_protocol::*;
 
 wasm_minimal_protocol::initiate_protocol!();
+
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+
+#[derive(Serialize, Deserialize)]
+struct TableData {
+    dimensions: TableDimensions,
+    rows: Vec<RowData>,
+    merged_cells: Vec<MergedCell>,
+}
+
+#[derive(Serialize, Deserialize)]
+struct TableDimensions {
+    columns: Vec<f64>,
+    rows: Vec<f64>,
+    max_columns: Option<u32>,
+    max_rows: Option<u32>,
+}
+
+#[derive(Serialize, Deserialize)]
+struct RowData {
+    row_number: u32,
+    cells: Vec<CellData>,
+}
+
+#[derive(Serialize, Deserialize)]
+struct CellData {
+    value: String,
+    column: u32,
+    style: Option<CellStyle>,
+}
+
+#[derive(Serialize, Deserialize)]
+struct CellStyle {
+    alignment: Option<Alignment>,
+    font: Option<FontStyle>,
+}
+
+#[derive(Serialize, Deserialize)]
+struct Position {
+    row: u32,
+    column: u32,
+}
+
+#[derive(Serialize, Deserialize)]
+struct MergedCell {
+    range: String,
+    start: Position,
+    end: Position,
+}
+
+#[derive(Serialize, Deserialize)]
+struct Alignment {
+    horizontal: String,
+    vertical: String,
+}
+
+#[derive(Serialize, Deserialize)]
+struct FontStyle {
+    bold: bool,
+    italic: bool,
+    size: f64,
+    color: Option<String>,
+    underline: bool,
+    strike: bool,
+}
 
 fn column_to_number(column: &str) -> u32 {
     column
@@ -81,63 +148,15 @@ fn get_row_heights(worksheet: &Worksheet, max_row: u32, default_height: f64) -> 
     rows
 }
 
-fn format_cell_value(
-    cell: &Cell,
-    book: &Spreadsheet,
-    parse_font_style: bool,
-) -> Result<String, String> {
-    let mut formatted_value = if cell.get_raw_value().is_error() {
+fn format_cell_value(cell: &Cell) -> Result<String, String> {
+    if cell.get_raw_value().is_error() {
         return Err(format!(
             "Error in cell {}",
             cell.get_coordinate().to_string()
         ));
     } else {
-        cell.get_value().to_string()
-    };
-
-    if parse_font_style {
-        if let Some(font) = cell.get_style().get_font() {
-            let mut text_params = Vec::new();
-
-            if *font.get_font_bold().get_val() {
-                text_params.push("weight: \"bold\"");
-            }
-            if *font.get_font_italic().get_val() {
-                text_params.push("style: \"italic\"");
-            }
-            let size = font.get_font_size().get_val();
-            let formatted_size_str = format!("{}pt", size);
-            let size_param = format!("size: {}", formatted_size_str);
-            text_params.push(&size_param);
-            let argb_color = font.get_color().get_argb_with_theme(book.get_theme());
-            let mut color_param = String::new();
-            if argb_color != "" {
-                // convert ARGB to RGBA
-                let rgba_color = if argb_color.len() == 8 {
-                    argb_color.chars().skip(2).collect::<String>()
-                } else {
-                    // 6
-                    argb_color.to_string()
-                };
-                color_param = format!("fill: rgb(\"#{}\")", &rgba_color.to_lowercase());
-                text_params.push(&color_param);
-            }
-            if !text_params.is_empty() {
-                formatted_value = format!("#text({})[{}]", text_params.join(", "), formatted_value);
-            } else {
-                formatted_value = format!("#text[{}]", formatted_value);
-            }
-            if font.get_font_underline().get_val() != &umya_spreadsheet::UnderlineValues::None {
-                formatted_value = format!("#underline[{}]", formatted_value);
-            }
-            // strike
-            if *font.get_font_strike().get_val() {
-                formatted_value = format!("#strike[{}]", formatted_value);
-            }
-        }
+        Ok(cell.get_value().to_string())
     }
-
-    Ok(formatted_value)
 }
 
 #[cfg_attr(feature = "typst-plugin", wasm_func)]
@@ -170,209 +189,161 @@ pub fn to_typst(
         .map_err(|e| format!("Failed to parse parse_font_style: {}", e))?;
     let worksheet = book
         .get_sheet(&sheet_index)
-        .ok_or_else(|| "Failed to get first worksheet".to_string())?;
-    let mut typst_code = String::new();
-
-    typst_code.push_str("table(\n");
+        .ok_or_else(|| "Failed to get worksheet".to_string())?;
 
     let (max_col, max_row) = get_table_dimensions(worksheet)?;
 
-    if max_col == 0 || max_row == 0 {
-        return Err("No data found in the worksheet".to_string());
+    let mut table_data = TableData {
+        dimensions: TableDimensions {
+            columns: Vec::new(),
+            rows: Vec::new(),
+            max_columns: Some(max_col),
+            max_rows: Some(max_row),
+        },
+        rows: Vec::new(),
+        merged_cells: Vec::new(),
+    };
+
+    // 处理表格尺寸
+
+    let properties = worksheet.get_sheet_format_properties();
+    table_data.dimensions.columns =
+        get_column_widths(worksheet, max_col, *properties.get_default_column_width());
+    table_data.dimensions.rows =
+        get_row_heights(worksheet, max_row, *properties.get_default_row_height());
+
+    // 处理合并单元格
+    for merge_cell in worksheet.get_merge_cells() {
+        let range = merge_cell.get_range().to_string();
+        let (start, end) = parse_merge_range(&range);
+        let (start_col, start_row) = parse_cell_reference(&start);
+        let (end_col, end_row) = parse_cell_reference(&end);
+
+        table_data.merged_cells.push(MergedCell {
+            range,
+            start: Position {
+                row: start_row,
+                column: start_col,
+            },
+            end: Position {
+                row: end_row,
+                column: end_col,
+            },
+        });
     }
-
-    let (columns_str, rows_str) = if parse_table_style {
-        let properties = worksheet.get_sheet_format_properties();
-
-        let columns = get_column_widths(worksheet, max_col, *properties.get_default_column_width());
-        let rows = get_row_heights(worksheet, max_row, *properties.get_default_row_height());
-
-        // Format dimensions
-        let columns_str = format!(
-            "({})",
-            columns
-                .iter()
-                .map(|w| format!("{}pt", w))
-                .collect::<Vec<_>>()
-                .join(", ")
-        );
-        let rows_str = format!(
-            "({})",
-            rows.iter()
-                .map(|h| format!("{}pt", h))
-                .collect::<Vec<_>>()
-                .join(", ")
-        );
-
-        (columns_str, rows_str)
-    } else {
-        // use max_col and max_row to int
-        let columns_str = format!("{}", max_col);
-        let rows_str = format!("{}", max_row);
-        (columns_str, rows_str)
-    };
-
-    typst_code.push_str(&format!("columns: {}, rows: {},\n", columns_str, rows_str));
-
-    let default_horizontal_alignment = match HorizontalAlignmentValues::default() {
-        HorizontalAlignmentValues::Left => "left",
-        HorizontalAlignmentValues::Center => "center",
-        HorizontalAlignmentValues::Right => "right",
-        _ => "None",
-    };
-    let default_vertical_alignment = match VerticalAlignmentValues::default() {
-        VerticalAlignmentValues::Bottom => "bottom",
-        VerticalAlignmentValues::Center => "horizon",
-        VerticalAlignmentValues::Top => "top",
-        _ => "None",
-    };
-
-    if parse_alignment {
-        let default_alignment = vec![default_horizontal_alignment, default_vertical_alignment]
-            .into_iter()
-            .filter(|s| *s != "None")
-            .collect::<Vec<_>>()
-            .join("+");
-
-        typst_code.push_str(&format!("align: {},\n", default_alignment));
-    }
-
-    // parse merged ranges
-    let merged_ranges: Vec<(String, (u32, u32, u32, u32))> = worksheet
-        .get_merge_cells()
-        .iter()
-        .map(|cell| {
-            let range = cell.get_range().to_string();
-            let (start, end) = parse_merge_range(&range);
-            let (start_col, start_row) = parse_cell_reference(&start);
-            let (end_col, end_row) = parse_cell_reference(&end);
-            (range, (start_col, start_row, end_col, end_row))
-        })
-        .collect();
-
-    // on each row
-    for row_num in 1..=max_row as u32 {
-        typst_code.push_str("  ");
+    // 处理行数据
+    for row_num in 1..=max_row {
         let row = worksheet.get_collection_by_row(&row_num);
+        let mut row_data = RowData {
+            row_number: row_num,
+            cells: Vec::new(),
+        };
 
-        let cell_map: std::collections::HashMap<u32, &umya_spreadsheet::Cell> = row
-            .iter()
-            .map(|&cell| {
-                let coord = cell.get_coordinate().to_string();
-                let col_str: String = coord.chars().take_while(|c| c.is_alphabetic()).collect();
-                let col_num = column_to_number(&col_str);
-                (col_num, cell)
-            })
-            .collect();
+        // 创建一个映射来存储每列的单元格
+        let mut col_cell_map: Vec<Option<&Cell>> = vec![None; max_col as usize];
+        for cell in row {
+            let (col_num, _) = parse_cell_reference(&cell.get_coordinate().to_string());
+            col_cell_map[(col_num - 1) as usize] = Some(cell);
+        }
 
-        // on each column
+        // 处理每一列
         for col_num in 1..=max_col {
-            // check if the current cell is the beginning of a merged range
-            let is_merged_cell =
-                merged_ranges
-                    .iter()
-                    .any(|(_, (start_col, start_row, end_col, end_row))| {
-                        let current_col = col_num;
-                        let current_row = row_num;
+            // 检查是否是被合并的单元格
+            let is_merged = table_data.merged_cells.iter().any(|mc| {
+                row_num >= mc.start.row
+                    && row_num <= mc.end.row
+                    && col_num >= mc.start.column
+                    && col_num <= mc.end.column
+                    && !(row_num == mc.start.row && col_num == mc.start.column)
+            });
 
-                        // if the current cell is within the merged range, return true
-                        current_col >= *start_col
-                            && current_col <= *end_col
-                            && current_row >= *start_row
-                            && current_row <= *end_row
-                            && !(current_col == *start_col && current_row == *start_row)
+            if !is_merged {
+                if let Some(Some(cell)) = col_cell_map.get((col_num - 1) as usize) {
+                    let cell_style = if parse_alignment || parse_font_style {
+                        Some(CellStyle {
+                            alignment: if parse_alignment {
+                                Some(get_cell_alignment(cell))
+                            } else {
+                                None
+                            },
+                            font: if parse_font_style {
+                                Some(get_cell_font_style(cell, &book))
+                            } else {
+                                None
+                            },
+                        })
+                    } else {
+                        None
+                    };
+
+                    row_data.cells.push(CellData {
+                        value: format_cell_value(cell)?,
+                        column: col_num,
+                        style: cell_style,
                     });
-
-            // skip if the current cell is a merged cell (already handled)
-            if is_merged_cell {
-                continue;
-            }
-
-            if let Some(cell) = cell_map.get(&col_num) {
-                let mut params = Vec::new();
-                let mut cell_code = "table.cell(".to_string();
-                if !params.is_empty() {
-                    cell_code.push_str(&params.join(", "));
-                    cell_code.push_str(", ");
                 }
-                let cell_ref = cell.get_coordinate().to_string();
-
-                // Handle merged ranges
-                if let Some((_, (start_col, start_row, end_col, end_row))) = merged_ranges
-                    .iter()
-                    .find(|(range, _)| range.starts_with(&cell_ref))
-                {
-                    // calculate rowspan and colspan
-                    let colspan = end_col - start_col + 1;
-                    let rowspan = end_row - start_row + 1;
-
-                    if rowspan > 1 {
-                        params.push(format!("rowspan: {}", rowspan));
-                    }
-                    if colspan > 1 {
-                        params.push(format!("colspan: {}", colspan));
-                    }
-                }
-
-                // Handle alignment
-                if parse_alignment {
-                    if let Some(alignment) = cell.get_style().get_alignment() {
-                        let mut align_parts = Vec::new();
-                        let horizontal = alignment.get_horizontal();
-                        let vertical = alignment.get_vertical();
-
-                        if horizontal != &umya_spreadsheet::HorizontalAlignmentValues::General {
-                            let align_str = match horizontal {
-                                umya_spreadsheet::HorizontalAlignmentValues::Left => "left",
-                                umya_spreadsheet::HorizontalAlignmentValues::Center => "center",
-                                umya_spreadsheet::HorizontalAlignmentValues::Right => "right",
-                                _ => "None",
-                            }
-                            .to_string();
-                            if align_str != "None" {
-                                align_parts.push(align_str);
-                            }
-                        }
-                        if vertical != &umya_spreadsheet::VerticalAlignmentValues::Bottom {
-                            let align_str = match vertical {
-                                umya_spreadsheet::VerticalAlignmentValues::Bottom => "bottom",
-                                umya_spreadsheet::VerticalAlignmentValues::Center => "horizon",
-                                umya_spreadsheet::VerticalAlignmentValues::Top => "top",
-                                _ => "None",
-                            }
-                            .to_string();
-                            if align_str != "None" {
-                                align_parts.push(align_str);
-                            }
-                        }
-                        if !align_parts.is_empty() {
-                            params.push(format!("align: {}", align_parts.join("+")));
-                        }
-                    }
-                }
-
-                if !params.is_empty() {
-                    cell_code.push_str(&params.join(", "));
-                    cell_code.push_str(", ");
-                }
-                let formatted_value = format_cell_value(cell, &book, parse_font_style)?;
-                cell_code.push_str(&format!(")[{}], ", formatted_value));
-
-                typst_code.push_str(&cell_code);
-            } else {
-                // 空单元格
-                typst_code.push_str("[], ");
             }
         }
-        typst_code.push_str("\n");
+
+        if !row_data.cells.is_empty() {
+            table_data.rows.push(row_data);
+        }
     }
 
-    typst_code.push(')');
+    // 序列化为 TOML 然后转换为 CBOR
+    let toml_string =
+        toml::to_string(&table_data).map_err(|e| format!("Failed to serialize to TOML: {}", e))?;
 
-    // 将结果序列化为 CBOR
     let mut buffer = vec![];
-    ciborium::ser::into_writer(&typst_code, &mut buffer)
-        .map_err(|e| format!("Failed to serialize results: {}", e))?;
+    ciborium::ser::into_writer(&toml_string, &mut buffer)
+        .map_err(|e| format!("Failed to serialize to CBOR: {}", e))?;
 
     Ok(buffer)
+}
+
+// 新增辅助函数
+fn get_cell_alignment(cell: &Cell) -> Alignment {
+    let style = cell.get_style();
+    let alignment = style.get_alignment().unwrap();
+
+    Alignment {
+        horizontal: match alignment.get_horizontal() {
+            HorizontalAlignmentValues::Left => "left",
+            HorizontalAlignmentValues::Center => "center",
+            HorizontalAlignmentValues::Right => "right",
+            _ => "default",
+        }
+        .to_string(),
+        vertical: match alignment.get_vertical() {
+            VerticalAlignmentValues::Bottom => "bottom",
+            VerticalAlignmentValues::Center => "center",
+            VerticalAlignmentValues::Top => "top",
+            _ => "default",
+        }
+        .to_string(),
+    }
+}
+
+fn get_cell_font_style(cell: &Cell, book: &Spreadsheet) -> FontStyle {
+    let font = cell.get_style().get_font().unwrap();
+
+    FontStyle {
+        bold: *font.get_font_bold().get_val(),
+        italic: *font.get_font_italic().get_val(),
+        size: *font.get_font_size().get_val(),
+        color: {
+            let argb = font.get_color().get_argb_with_theme(book.get_theme());
+            if argb.is_empty() {
+                None
+            } else {
+                Some(if argb.len() == 8 {
+                    argb.chars().skip(2).collect::<String>() // skip 的作用是去掉前两位，即 alpha 通道
+                } else {
+                    argb.to_string()
+                })
+            }
+        },
+        underline: font.get_font_underline().get_val() != &UnderlineValues::None,
+        strike: *font.get_font_strike().get_val(),
+    }
 }
