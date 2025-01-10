@@ -165,7 +165,17 @@
   table(..table_args, ..args, ..cells)
 }
 
-
+/// 
+///
+/// - xlsx (bytes): Pass the xlsx file content by `read("path/to/file.xlsx", encoding: none)`.
+/// - sheet-index (integer): The index of the sheet to be parsed.
+/// - parse-table-style (boolean): Whether to parse the table style(like column width and row height).
+/// - parse-alignment (boolean): Whether to parse the cell alignment.
+/// - parse-stroke (boolean): Whether to parse the cell border.
+/// - parse-fill (boolean): Whether to parse the cell fill color.
+/// - parse-font (boolean): Whether to parse the cell font style.
+/// - args (arguments): Other arguments for the table.
+/// -> 
 #let xlsx-parser(
   xlsx,
   sheet-index: 0,
