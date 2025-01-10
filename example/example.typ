@@ -8,7 +8,7 @@
   parse-alignment: true,
   parse-stroke: true,
   parse-fill: true,
-  parse-font-style: true,
+  parse-font: true,
 )
 
 #pagebreak()
@@ -43,5 +43,5 @@
 
 #xlsx-parser(
   read("test.xlsx", encoding: none),
-  parse-font-style: false,
+  parse-font: false,
 )

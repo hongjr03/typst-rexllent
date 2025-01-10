@@ -173,7 +173,7 @@
   parse-alignment: true,
   parse-stroke: true,
   parse-fill: true,
-  parse-font-style: true,
+  parse-font: true,
   ..args,
 ) = {
   let data = p.to_typst(
@@ -182,7 +182,7 @@
     bytes(if parse-alignment { "true" } else { "false" }),
     bytes(if parse-stroke { "true" } else { "false" }),
     bytes(if parse-fill { "true" } else { "false" }),
-    bytes(if parse-font-style { "true" } else { "false" }),
+    bytes(if parse-font { "true" } else { "false" }),
   )
   parse_excel_table(
     toml.decode(cbor.decode(data)),
