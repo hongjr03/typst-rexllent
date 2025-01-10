@@ -11,6 +11,8 @@
   parse-font: true,
 )
 
+#set table(columns: 19in)
+
 #pagebreak()
 
 #xlsx-parser(

@@ -82,7 +82,7 @@
   // 设置列宽和行高
   if dims.columns != none and dims.rows != none {
     if parse-table-style {
-      table_args.insert("columns", dims.columns.map(c => eval(str(c) + "pt")))
+      table_args.insert("columns", dims.columns.map(c => eval(str(c * 0.1) + "in")))
     } else {
       table_args.insert("columns", dims.max_columns)
     }
@@ -165,7 +165,7 @@
   table(..table_args, ..args, ..cells)
 }
 
-/// 
+///
 ///
 /// - xlsx (bytes): Pass the xlsx file content by `read("path/to/file.xlsx", encoding: none)`.
 /// - sheet-index (integer): The index of the sheet to be parsed.
@@ -175,7 +175,7 @@
 /// - parse-fill (boolean): Whether to parse the cell fill color.
 /// - parse-font (boolean): Whether to parse the cell font style.
 /// - args (arguments): Other arguments for the table.
-/// -> 
+/// ->
 #let xlsx-parser(
   xlsx,
   sheet-index: 0,

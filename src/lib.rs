@@ -143,7 +143,7 @@ fn get_column_widths(worksheet: &Worksheet, max_col: u32, default_width: f64) ->
             columns[col_idx] = col.get_width().clone();
         }
     }
-    columns.iter().map(|w| w * 64.0 / 8.43).collect()
+    columns
 }
 
 fn get_row_heights(worksheet: &Worksheet, max_row: u32, default_height: f64) -> Vec<f64> {
