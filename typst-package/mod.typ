@@ -23,9 +23,10 @@
     if font.strike { content = strike[#content] }
   }
 
+  let cell_args = (:)
+
   // 处理对齐
   if style.keys().contains("alignment") and style.alignment != none {
-    let cell_args = (:)
     let align = ()
 
     if style.alignment.horizontal != "default" {
@@ -42,14 +43,35 @@
 
     if align.len() > 0 {
       cell_args.insert("align", eval(align.join("+")))
-      content = table.cell(..cell_args)[#content]
     }
   }
 
-  return content
+  // 处理边框
+  if style.keys().contains("border") and style.border != none {
+    let borders = style.border
+    let stroke_args = (:)
+    for (border, value) in style.border {
+      if value == false {
+        stroke_args.insert(border, none)
+      }
+    }
+    cell_args.insert("stroke", stroke_args)
+    if stroke_args.len() > 0 {
+      cell_args.insert("stroke", stroke_args)
+    }
+  }
+
+  // 处理填充
+  if style.keys().contains("color") and style.color != none {
+    let fill = style.color
+    if fill != none {
+      cell_args.insert("fill", rgb(fill))
+    }
+  }
+  return (cell_args, content)
 }
 
-#let parse_excel_table(data, parse-table-style: true, ..args) = {
+#let parse_excel_table(data, parse-table-style: true, parse-stroke: true, ..args) = {
   // 解析维度信息
   let dims = data.dimensions
   let max_col = dims.columns.len()
@@ -70,7 +92,6 @@
       table_args.insert("rows", dims.max_rows)
     }
   }
-
   // 创建合并单元格映射
   let merged = (:)
   for mc in data.merged_cells {
@@ -117,7 +138,8 @@
           )
 
           // 处理样式和内容
-          let content = create_cell_content(cell)
+          let (_cell_args, content) = create_cell_content(cell)
+          cell_args += _cell_args
           cells.push(table.cell(..cell_args)[#content])
         }
         // 如果不是起始点，跳过这个单元格
@@ -127,14 +149,19 @@
       // 处理普通单元格
       let cell = cell_map.at(str(col), default: none)
       if cell != none {
-        cells.push(create_cell_content(cell))
+        let (_cell_args, content) = create_cell_content(cell)
+        cells.push(table.cell(.._cell_args)[#content])
       } else {
         // 空单元格
-        cells.push([])
+        if parse-stroke {
+          cells.push(table.cell(stroke: none)[#none])
+        } else {
+          cells.push([])
+        }
       }
     }
   }
-  
+
   table(..table_args, ..args, ..cells)
 }
 
@@ -144,19 +171,23 @@
   sheet-index: 0,
   parse-table-style: true,
   parse-alignment: true,
+  parse-stroke: true,
+  parse-fill: true,
   parse-font-style: true,
   ..args,
 ) = {
   let data = p.to_typst(
     xlsx,
     bytes(str(sheet-index)),
-    bytes(if parse-table-style { "true" } else { "false" }),
     bytes(if parse-alignment { "true" } else { "false" }),
+    bytes(if parse-stroke { "true" } else { "false" }),
+    bytes(if parse-fill { "true" } else { "false" }),
     bytes(if parse-font-style { "true" } else { "false" }),
   )
   parse_excel_table(
     toml.decode(cbor.decode(data)),
     parse-table-style: parse-table-style,
+    parse-stroke: parse-stroke,
     ..args,
   )
 }

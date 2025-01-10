@@ -14,15 +14,14 @@ register_custom_getrandom!(always_fail);
 
 use std::io::Cursor;
 use umya_spreadsheet::{
-    reader, Cell, HorizontalAlignmentValues, Spreadsheet, UnderlineValues, VerticalAlignmentValues,
-    Worksheet,
+    reader, BorderStyleValues, Cell, HorizontalAlignmentValues, Spreadsheet, UnderlineValues,
+    VerticalAlignmentValues, Worksheet,
 };
 use wasm_minimal_protocol::*;
 
 wasm_minimal_protocol::initiate_protocol!();
 
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 
 #[derive(Serialize, Deserialize)]
 struct TableData {
@@ -55,6 +54,8 @@ struct CellData {
 #[derive(Serialize, Deserialize)]
 struct CellStyle {
     alignment: Option<Alignment>,
+    border: Option<Border>,
+    color: Option<String>,
     font: Option<FontStyle>,
 }
 
@@ -75,6 +76,14 @@ struct MergedCell {
 struct Alignment {
     horizontal: String,
     vertical: String,
+}
+
+#[derive(Serialize, Deserialize)]
+struct Border {
+    left: bool,
+    right: bool,
+    top: bool,
+    bottom: bool,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -148,7 +157,7 @@ fn get_row_heights(worksheet: &Worksheet, max_row: u32, default_height: f64) -> 
     rows
 }
 
-fn format_cell_value(cell: &Cell) -> Result<String, String> {
+fn cell_value(cell: &Cell) -> Result<String, String> {
     if cell.get_raw_value().is_error() {
         return Err(format!(
             "Error in cell {}",
@@ -163,8 +172,9 @@ fn format_cell_value(cell: &Cell) -> Result<String, String> {
 pub fn to_typst(
     bytes: &[u8],
     sheet_index: &[u8],
-    parse_table_style: &[u8],
     parse_alignment: &[u8],
+    parse_border: &[u8],
+    parse_bg_color: &[u8],
     parse_font_style: &[u8],
 ) -> Result<Vec<u8>, String> {
     let file = Cursor::new(bytes);
@@ -175,14 +185,18 @@ pub fn to_typst(
         .map_err(|e| format!("Failed to parse sheet index: {}", e))?
         .parse()
         .map_err(|e| format!("Failed to parse sheet index: {}", e))?;
-    let parse_table_style: bool = String::from_utf8(parse_table_style.to_vec())
-        .map_err(|e| format!("Failed to parse parse_table_style: {}", e))?
-        .parse()
-        .map_err(|e| format!("Failed to parse parse_table_style: {}", e))?;
     let parse_alignment: bool = String::from_utf8(parse_alignment.to_vec())
         .map_err(|e| format!("Failed to parse parse_alignment: {}", e))?
         .parse()
         .map_err(|e| format!("Failed to parse parse_alignment: {}", e))?;
+    let parse_border: bool = String::from_utf8(parse_border.to_vec())
+        .map_err(|e| format!("Failed to parse parse_border: {}", e))?
+        .parse()
+        .map_err(|e| format!("Failed to parse parse_border: {}", e))?;
+    let parse_bg_color: bool = String::from_utf8(parse_bg_color.to_vec())
+        .map_err(|e| format!("Failed to parse parse_bg_color: {}", e))?
+        .parse()
+        .map_err(|e| format!("Failed to parse parse_bg_color: {}", e))?;
     let parse_font_style: bool = String::from_utf8(parse_font_style.to_vec())
         .map_err(|e| format!("Failed to parse parse_font_style: {}", e))?
         .parse()
@@ -266,6 +280,16 @@ pub fn to_typst(
                             } else {
                                 None
                             },
+                            border: if parse_border {
+                                Some(get_cell_border(cell))
+                            } else {
+                                None
+                            },
+                            color: if parse_bg_color {
+                                get_cell_bg_color(cell, &book)
+                            } else {
+                                None
+                            },
                             font: if parse_font_style {
                                 Some(get_cell_font_style(cell, &book))
                             } else {
@@ -277,7 +301,7 @@ pub fn to_typst(
                     };
 
                     row_data.cells.push(CellData {
-                        value: format_cell_value(cell)?,
+                        value: cell_value(cell)?,
                         column: col_num,
                         style: cell_style,
                     });
@@ -321,6 +345,33 @@ fn get_cell_alignment(cell: &Cell) -> Alignment {
             _ => "default",
         }
         .to_string(),
+    }
+}
+
+fn get_cell_border(cell: &Cell) -> Border {
+    let style = cell.get_style();
+    let border = style.get_borders().unwrap();
+
+    Border {
+        left: border.get_left().get_style() != &BorderStyleValues::None,
+        right: border.get_right().get_style() != &BorderStyleValues::None,
+        top: border.get_top().get_style() != &BorderStyleValues::None,
+        bottom: border.get_bottom().get_style() != &BorderStyleValues::None,
+    }
+}
+
+fn get_cell_bg_color(cell: &Cell, book: &Spreadsheet) -> Option<String> {
+    let style = cell.get_style();
+    let color = style.get_background_color()?;
+    let argb = color.get_argb_with_theme(book.get_theme());
+    if argb.is_empty() {
+        Some("".to_string())
+    } else {
+        Some(if argb.len() == 8 {
+            argb.chars().skip(2).collect::<String>() // skip 的作用是去掉前两位，即 alpha 通道
+        } else {
+            argb.to_string()
+        })
     }
 }
 
