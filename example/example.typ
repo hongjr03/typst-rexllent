@@ -1,4 +1,4 @@
-#import "../typst-package/lib.typ": xlsx-parser
+#import "@preview/rexllent:0.2.0": xlsx-parser
 
 #set page(width: auto, height: auto, margin: 1em)
 
