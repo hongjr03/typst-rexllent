@@ -4,7 +4,7 @@
 #show: zebraw
 #show table: it => figure(it)
 
-= ReXLlenT
+= 🦖 ReXLlenT
 
 ReXLlenT is a typst package that helps you convert Excel *xlsx* tables to typst tables, powered by wasm. (Formerly eXMLlent.) The _*R*_ in ReXLlenT stands for _Rust_, the language that wasm plugin is written in. _*XL*_ stands for _Excel_, and _*T*_ stands for the wonderful _Typst_.
 

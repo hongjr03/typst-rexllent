@@ -1,4 +1,4 @@
-# ReXLlenT
+# 🦖 ReXLlenT
 
 ReXLlenT is a typst package that helps you convert Excel **xlsx** tables to typst tables, powered by wasm. (Formerly eXMLlent.)
 
@@ -63,6 +63,30 @@ Have fun!
 - Typst Table (with `parse-font: false`)
 
   ![Typst](assets/example6.png)
+
+## Pixel Art
+
+You can also convert pixel art to typst table using ReXLlenT. Here are some examples:
+
+- Typst Logo
+  
+  ![typst](assets/typst_example1.png)
+
+- Typst Guy
+
+  ![typst_guy](assets/typst_example2.png)
+
+- Impression, soleil levant
+
+  ![monet](assets/typst_example3.png)
+
+## Limitations
+
+ReXLlenT is still in development and PRs are welcome. Here are some limitations:
+
+- Only supports xlsx format.
+- Not yet implemented in-cell image parsing.
+- Cannot detect special characters in typst, which may cause parsing errors.
 
 ## Credits
 
