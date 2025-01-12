@@ -76,7 +76,7 @@ You can also convert pixel art to typst table using ReXLlenT. Here are some exam
 
   ![typst_guy](assets/typst_example2.png)
 
-- Impression, soleil levant
+- *Impression, soleil levant*
 
   ![monet](assets/typst_example3.png)
 
@@ -96,3 +96,13 @@ ReXLlenT is still in development and PRs are welcome. Here are some limitations:
 ## License
 
 This package is licensed under the MIT License.
+
+## Star History
+
+<a href="https://star-history.com/#hongjr03/typst-rexllent&Date">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=hongjr03/typst-rexllent&type=Date&theme=dark" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=hongjr03/typst-rexllent&type=Date" />
+   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=hongjr03/typst-rexllent&type=Date" />
+ </picture>
+</a>
