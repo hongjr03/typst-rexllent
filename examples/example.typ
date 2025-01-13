@@ -1,4 +1,4 @@
-#import "@preview/rexllent:0.2.0": xlsx-parser
+#import "@preview/rexllent:0.2.2": xlsx-parser
 #import "@preview/zebraw:0.1.0": zebraw
 
 #show: zebraw
@@ -13,7 +13,7 @@ ReXLlenT is a typst package that helps you convert Excel *xlsx* tables to typst 
 Start by importing the package:
 
 ```typ
-#import "@preview/rexllent:0.2.1": xlsx-parser
+#import "@preview/rexllent:0.2.2": xlsx-parser
 ```
 
 Then you can use `xlsx-parser` function to convert your xlsx Excel table to typst table.
@@ -34,49 +34,37 @@ By passing `sheet-index` parameter, you can specify the sheet index to parse. Th
 
 By toggling parameters below, you can customize the output table:
 
-- `parse-table-style`: Parse table style(columns width, rows height), default is `true`.
+- `parse-table-style`: Parse table style(columns width, rows height), default is `false`.
 - `parse-alignment`: Parse cell content alignment, default is `true`.
 - `parse-stroke`: Parse cell stroke, default is `true`.
 - `parse-fill`: Parse cell fill, default is `true`.
 - `parse-font`: Parse font style, default is `true`.
 
-Here is an example with all parameters set to `false`:
+#grid(columns: (1fr, 1fr))[
+  Here is an example with all parameters set to default values:
+  ```typ
+  #xlsx-parser(
+    read("test.xlsx", encoding: none),
+  )
+  ```
+][
+  #xlsx-parser(read("test.xlsx", encoding: none))
+]
 
-```typ
-#xlsx-parser(
-  read("test.xlsx", encoding: none),
-  parse-table-style: false,
-  parse-alignment: false,
-  parse-stroke: false,
-  parse-fill: false,
-  parse-font: false,
-)
-```
+And examples with each parameter set to the opposite value:
 
-
-#xlsx-parser(
-  read("test.xlsx", encoding: none),
-  parse-table-style: false,
-  parse-alignment: false,
-  parse-stroke: false,
-  parse-fill: false,
-  parse-font: false,
-)
-
-And examples with each parameter set to `false`:
-
-+ `parse-table-style: false`
++ `parse-table-style: true`
 
   ```typ
   #xlsx-parser(
     read("test.xlsx", encoding: none),
-    parse-table-style: false,
+    parse-table-style: true,
   )
   ```
 
   #xlsx-parser(
     read("test.xlsx", encoding: none),
-    parse-table-style: false,
+    parse-table-style: true,
   )
 
 + `parse-alignment: false`
