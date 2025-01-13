@@ -276,12 +276,12 @@ pub fn to_typst(
                     let cell_style = if parse_alignment || parse_font_style {
                         Some(CellStyle {
                             alignment: if parse_alignment {
-                                Some(get_cell_alignment(cell))
+                                get_cell_alignment(cell)
                             } else {
                                 None
                             },
                             border: if parse_border {
-                                Some(get_cell_border(cell))
+                                get_cell_border(cell)
                             } else {
                                 None
                             },
@@ -291,7 +291,7 @@ pub fn to_typst(
                                 None
                             },
                             font: if parse_font_style {
-                                Some(get_cell_font_style(cell, &book))
+                                get_cell_font_style(cell, &book)
                             } else {
                                 None
                             },
@@ -326,11 +326,14 @@ pub fn to_typst(
 }
 
 // 新增辅助函数
-fn get_cell_alignment(cell: &Cell) -> Alignment {
+fn get_cell_alignment(cell: &Cell) -> Option<Alignment> {
     let style = cell.get_style();
-    let alignment = style.get_alignment().unwrap();
+    let alignment = match style.get_alignment() {
+        Some(alignment) => alignment,
+        None => return None,
+    };
 
-    Alignment {
+    Some(Alignment {
         horizontal: match alignment.get_horizontal() {
             HorizontalAlignmentValues::Left => "left",
             HorizontalAlignmentValues::Center => "center",
@@ -345,19 +348,22 @@ fn get_cell_alignment(cell: &Cell) -> Alignment {
             _ => "default",
         }
         .to_string(),
-    }
+    })
 }
 
-fn get_cell_border(cell: &Cell) -> Border {
+fn get_cell_border(cell: &Cell) -> Option<Border> {
     let style = cell.get_style();
-    let border = style.get_borders().unwrap();
+    let border = match style.get_borders() {
+        Some(border) => border,
+        None => return None,
+    };
 
-    Border {
+    Some(Border {
         left: border.get_left().get_style() != &BorderStyleValues::None,
         right: border.get_right().get_style() != &BorderStyleValues::None,
         top: border.get_top().get_style() != &BorderStyleValues::None,
         bottom: border.get_bottom().get_style() != &BorderStyleValues::None,
-    }
+    })
 }
 
 fn get_cell_bg_color(cell: &Cell, book: &Spreadsheet) -> Option<String> {
@@ -375,10 +381,15 @@ fn get_cell_bg_color(cell: &Cell, book: &Spreadsheet) -> Option<String> {
     }
 }
 
-fn get_cell_font_style(cell: &Cell, book: &Spreadsheet) -> FontStyle {
-    let font = cell.get_style().get_font().unwrap();
+fn get_cell_font_style(cell: &Cell, book: &Spreadsheet) -> Option<FontStyle> {
+    let font = match cell.get_style().get_font() {
+        Some(font) => font,
+        None => {
+            return None;
+        }
+    };
 
-    FontStyle {
+    Some(FontStyle {
         bold: *font.get_font_bold().get_val(),
         italic: *font.get_font_italic().get_val(),
         size: *font.get_font_size().get_val(),
@@ -396,5 +407,122 @@ fn get_cell_font_style(cell: &Cell, book: &Spreadsheet) -> FontStyle {
         },
         underline: font.get_font_underline().get_val() != &UnderlineValues::None,
         strike: *font.get_font_strike().get_val(),
+    })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::fs::File;
+    use std::io::Read;
+
+    fn test_from_path(path: &str) -> Result<(), String> {
+        let mut file = File::open(path).map_err(|e| format!("Failed to open file: {}", e))?;
+        let mut buffer = Vec::new();
+        file.read_to_end(&mut buffer)
+            .map_err(|e| format!("Failed to read file: {}", e))?;
+
+        let sheet_index = "0".as_bytes();
+        let parse_alignment = "true".as_bytes();
+        let parse_border = "true".as_bytes();
+        let parse_bg_color = "true".as_bytes();
+        let parse_font_style = "true".as_bytes();
+
+        let result = to_typst(
+            &buffer,
+            sheet_index,
+            parse_alignment,
+            parse_border,
+            parse_bg_color,
+            parse_font_style,
+        )?;
+
+        // cbor bytes to toml string
+        let toml_string: String = ciborium::de::from_reader(&result[..])
+            .map_err(|e| format!("Failed to deserialize from CBOR: {}", e))?;
+        // println!("{}", toml_string);
+        assert_ne!(toml_string.len(), 0);
+        Ok(())
+    }
+
+    #[test]
+    fn test_default() {
+        let path = "tests/data/default.xlsx";
+        test_from_path(path).unwrap();
+    }
+
+    #[test]
+    fn test_cell() {
+        let paths: Vec<&str> = vec![
+            "tests/data/cell/alignment.xlsx",
+            "tests/data/cell/border.xlsx",
+            "tests/data/cell/fill.xlsx",
+            "tests/data/cell/incontinunity.xlsx",
+            "tests/data/cell/merged.xlsx",
+        ];
+        for path in paths {
+            test_from_path(path).unwrap();
+        }
+    }
+
+    #[test]
+    fn test_font() {
+        let paths: Vec<&str> = vec![
+            "tests/data/font/bold.xlsx",
+            "tests/data/font/fill.xlsx",
+            "tests/data/font/italic.xlsx",
+            "tests/data/font/size.xlsx",
+            "tests/data/font/strike.xlsx",
+            "tests/data/font/underline.xlsx",
+        ];
+        for path in paths {
+            test_from_path(path).unwrap();
+        }
+    }
+
+    #[test]
+    fn test_index() {
+        let paths: Vec<&str> = vec![
+            "tests/data/index/1.xlsx",
+        ];
+        for path in paths {
+            test_from_path(path).unwrap();
+        }
+    }
+
+    #[test]
+    fn test_table() {
+        let paths: Vec<&str> = vec![
+            "tests/data/table/column_width.xlsx",
+            "tests/data/table/row_height.xlsx",
+        ];
+        for path in paths {
+            test_from_path(path).unwrap();
+        }
+    }
+
+    #[test]
+    fn test_not_supported() {
+        let paths: Vec<&str> = vec![
+            "tests/data/not_supported/lowercase.xlsx",
+            "tests/data/not_supported/rotate.xlsx",
+            "tests/data/not_supported/uppercase.xlsx",
+        ];
+        for path in paths {
+            test_from_path(path).unwrap();
+        }
+    }
+
+    #[test]
+    fn test_examples() {
+        let paths = vec![
+            "examples/test.xlsx",
+            "examples/typst.xlsx",
+            "examples/typst_guy.xlsx",
+            "examples/monet.xlsx",
+        ];
+        for path in paths {
+            test_from_path(path).unwrap();
+        }
     }
 }

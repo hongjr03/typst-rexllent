@@ -2,7 +2,7 @@
 
 // 辅助函数：创建单元格内容
 #let create_cell_content(cell) = {
-  if not cell.keys().contains("style") or cell.style == none { return ({}, cell.value) }
+  if not cell.keys().contains("style") or cell.style == none { return ({ }, cell.value) }
 
   let content = cell.value
   let style = cell.style
@@ -74,20 +74,21 @@
 #let parse_excel_table(data, parse-table-style: true, parse-stroke: true, ..args) = {
   // 解析维度信息
   let dims = data.dimensions
-  let max_col = dims.columns.len()
 
   // 创建表格参数
   let table_args = (:)
 
   // 设置列宽和行高
   if dims.columns != none and dims.rows != none {
+    let columns = dims.columns.map(c => eval(str(c * 0.1) + "in"))
+    let rows = dims.rows.map(r => eval(str(r) + "pt"))
     if parse-table-style {
-      table_args.insert("columns", dims.columns.map(c => eval(str(c * 0.1) + "in")))
+      table_args.insert("columns", columns)
     } else {
       table_args.insert("columns", dims.max_columns)
     }
     if parse-table-style {
-      table_args.insert("rows", dims.rows.map(r => eval(str(r) + "pt")))
+      table_args.insert("rows", rows)
     } else {
       table_args.insert("rows", dims.max_rows)
     }
@@ -121,7 +122,7 @@
     }
 
     // 处理这一行的每一列
-    for col in range(1, max_col + 1) {
+    for col in range(1, dims.max_columns + 1) {
       let pos_key = str(row.row_number) + "," + str(col)
 
       // 检查是否是被合并的单元格
@@ -179,7 +180,7 @@
 #let xlsx-parser(
   xlsx,
   sheet-index: 0,
-  parse-table-style: true,
+  parse-table-style: false,
   parse-alignment: true,
   parse-stroke: true,
   parse-fill: true,
