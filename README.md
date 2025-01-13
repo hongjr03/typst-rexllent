@@ -7,7 +7,7 @@ ReXLlenT is a typst package that helps you convert Excel **xlsx** tables to typs
 Start by importing the package:
 
 ```typ
-#import "@preview/rexllent:0.2.1": xlsx-parser
+#import "@preview/rexllent:0.2.2": xlsx-parser
 ```
 
 Then you can use `xlsx-parser` function to convert your xlsx Excel table to typst table. Here is an example:
@@ -24,7 +24,7 @@ By passing `sheet-index` parameter, you can specify the sheet index to parse. Th
 
 By toggling parameters below, you can customize the output table:
 
-- `parse-table-style`: Parse table style(columns width, rows height), default is `true`.
+- `parse-table-style`: Parse table style(columns width, rows height), default is `false` (due to default column width will be parsed as 0.0).
 - `parse-alignment`: Parse cell content alignment, default is `true`.
 - `parse-stroke`: Parse cell stroke, default is `true`.
 - `parse-fill`: Parse cell fill, default is `true`.
@@ -42,11 +42,11 @@ Have fun!
 
 - Typst Table (with default parameters)
 
-  ![Typst](assets/example1.png)
+  ![Typst](assets/example2.png)
 
 - Typst Table (with `parse-table-style: false`)
 
-  ![Typst](assets/example2.png)
+  ![Typst](assets/example1.png)
 
 - Typst Table (with `parse-alignment: false`)
 
