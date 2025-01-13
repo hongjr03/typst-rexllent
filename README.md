@@ -48,7 +48,7 @@ Have fun!
 
   ![Typst](assets/example2.png)
 
-- Typst Table (with `parse-table-style: false`)
+- Typst Table (with `parse-table-style: true`)
 
   ![Typst](assets/example1.png)
 
