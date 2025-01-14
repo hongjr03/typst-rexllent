@@ -66,6 +66,22 @@
 
 #xlsx-parser(read("/tests/data/table/row_height.xlsx", encoding: none), parse-table-style: true)
 
+=== zero_height
+
+#xlsx-parser(read("/tests/data/table/zero_height.xlsx", encoding: none), parse-table-style: true)
+
+=== zero_width
+
+#xlsx-parser(read("/tests/data/table/zero_width.xlsx", encoding: none), parse-table-style: true)
+
+=== hidden_column
+
+#xlsx-parser(read("/tests/data/table/hidden_column.xlsx", encoding: none), parse-table-style: true)
+
+=== hidden_row
+
+#xlsx-parser(read("/tests/data/table/hidden_row.xlsx", encoding: none), parse-table-style: true)
+
 == not_supported
 
 === lowercase
