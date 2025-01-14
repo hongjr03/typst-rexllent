@@ -84,13 +84,15 @@ You can also convert pixel art to typst table using ReXLlenT. Here are some exam
 
   ![monet](assets/typst_example3.png)
 
-## Limitations
+## TODOs
 
-ReXLlenT is still in development and PRs are welcome. Here are some limitations:
+ReXLlenT is still in development and PRs are welcome. Here are some TODOs (also limitations):
 
-- Only supports xlsx format.
-- Not yet implemented in-cell image parsing.
-- Cannot detect special characters in typst, which may cause parsing errors.
+- [ ] Implement in-cell image parsing.
+- [ ] Prevent parsing errors caused by special characters.
+- [ ] Parse auto width and height.
+- [ ] Handle hidden rows and columns.
+- ...
 
 ## Credits
 

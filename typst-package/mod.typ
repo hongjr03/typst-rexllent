@@ -80,8 +80,8 @@
 
   // 设置列宽和行高
   if dims.columns != none and dims.rows != none {
-    let columns = dims.columns.map(c => eval(str(c * 0.1) + "in"))
-    let rows = dims.rows.map(r => eval(str(r) + "pt"))
+    let columns = dims.columns.map(c => if c != 0.0 { eval(str(c * 0.1) + "in") } else { auto })
+    let rows = dims.rows.map(r => if r != 0.0 { eval(str(r) + "pt") } else { auto })
     if parse-table-style {
       table_args.insert("columns", columns)
     } else {
@@ -180,7 +180,7 @@
 #let xlsx-parser(
   xlsx,
   sheet-index: 0,
-  parse-table-style: false,
+  parse-table-style: true,
   parse-alignment: true,
   parse-stroke: true,
   parse-fill: true,
