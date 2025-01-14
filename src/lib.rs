@@ -314,14 +314,11 @@ pub fn to_typst(
         }
     }
 
-    // 序列化为 TOML 然后转换为 CBOR
+    // 序列化为 TOML 然后转换为字节
     let toml_string =
         toml::to_string(&table_data).map_err(|e| format!("Failed to serialize to TOML: {}", e))?;
 
-    let mut buffer = vec![];
-    ciborium::ser::into_writer(&toml_string, &mut buffer)
-        .map_err(|e| format!("Failed to serialize to CBOR: {}", e))?;
-
+    let buffer = Vec::from(toml_string.as_bytes());
     Ok(buffer)
 }
 
@@ -437,10 +434,7 @@ mod tests {
             parse_font_style,
         )?;
 
-        // cbor bytes to toml string
-        let toml_string: String = ciborium::de::from_reader(&result[..])
-            .map_err(|e| format!("Failed to deserialize from CBOR: {}", e))?;
-        // println!("{}", toml_string);
+        let toml_string = String::from_utf8(result).unwrap();
         assert_ne!(toml_string.len(), 0);
         Ok(())
     }
@@ -482,9 +476,7 @@ mod tests {
 
     #[test]
     fn test_index() {
-        let paths: Vec<&str> = vec![
-            "tests/data/index/1.xlsx",
-        ];
+        let paths: Vec<&str> = vec!["tests/data/index/1.xlsx"];
         for path in paths {
             test_from_path(path).unwrap();
         }

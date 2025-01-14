@@ -13,10 +13,9 @@ default = ["typst-plugin"]
 
 [dependencies]
 umya-spreadsheet = { version = "2.2.1", features = ["js"] }
-getrandom = { version = "0.2", features = ["custom"] }
+getrandom = { version = "0.2.15", features = ["custom"] }
 wasm-minimal-protocol = { git = "https://github.com/astrale-sharp/wasm-minimal-protocol.git", rev = "637508c", optional = true }
-ciborium = "0.2.2"
-serde = { version = "1.0", features = ["derive"] }
+serde = { version = "1.0.217", features = ["derive"] }
 toml = "0.8.19"
 
 [profile.release]

@@ -196,7 +196,11 @@
     bytes(if parse-font { "true" } else { "false" }),
   )
   parse_excel_table(
-    toml.decode(cbor.decode(data)),
+    if sys.version < version(0, 13, 0) {
+      toml.decode(data)
+    } else {
+      toml(data)
+    },
     parse-table-style: parse-table-style,
     parse-stroke: parse-stroke,
     ..args,
