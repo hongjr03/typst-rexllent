@@ -1,1 +1,1 @@
-#import "mod.typ": xlsx-parser
+#import "mod.typ": xlsx-parser, spreet-parser

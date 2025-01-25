@@ -1,4 +1,4 @@
-#import "/typst-package/lib.typ": xlsx-parser
+#import "/typst-package/lib.typ": xlsx-parser, spreet-parser
 
 = Tests
 
@@ -10,7 +10,7 @@
 
 === alignment
 
-#xlsx-parser(read("/tests/data/cell/alignment.xlsx", encoding: none), columns: (3em,) * 3, rows: (3em,) * 2)
+#(xlsx-parser(read("/tests/data/cell/alignment.xlsx", encoding: none), parse-stroke: false, stroke: black + 1pt))
 
 === border
 
@@ -60,27 +60,27 @@
 
 === column_width
 
-#xlsx-parser(read("/tests/data/table/column_width.xlsx", encoding: none), parse-table-style: true, )
+#xlsx-parser(read("/tests/data/table/column_width.xlsx", encoding: none))
 
 === row_height
 
-#xlsx-parser(read("/tests/data/table/row_height.xlsx", encoding: none), parse-table-style: true)
+#xlsx-parser(read("/tests/data/table/row_height.xlsx", encoding: none))
 
 === zero_height
 
-#xlsx-parser(read("/tests/data/table/zero_height.xlsx", encoding: none), parse-table-style: true)
+#xlsx-parser(read("/tests/data/table/zero_height.xlsx", encoding: none))
 
 === zero_width
 
-#xlsx-parser(read("/tests/data/table/zero_width.xlsx", encoding: none), parse-table-style: true)
+#xlsx-parser(read("/tests/data/table/zero_width.xlsx", encoding: none))
 
 === hidden_column
 
-#xlsx-parser(read("/tests/data/table/hidden_column.xlsx", encoding: none), parse-table-style: true)
+#xlsx-parser(read("/tests/data/table/hidden_column.xlsx", encoding: none))
 
 === hidden_row
 
-#xlsx-parser(read("/tests/data/table/hidden_row.xlsx", encoding: none), parse-table-style: true)
+#xlsx-parser(read("/tests/data/table/hidden_row.xlsx", encoding: none))
 
 == not_supported
 
@@ -95,3 +95,7 @@
 === uppercase
 
 #xlsx-parser(read("/tests/data/not_supported/uppercase.xlsx", encoding: none))
+
+#import "@preview/spreet:0.1.0"
+
+#spreet-parser(spreet.decode(read("/tests/data/default.ods", encoding: none)))

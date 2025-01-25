@@ -166,7 +166,7 @@
   table(..table_args, ..args, ..cells)
 }
 
-///
+/// Parse the xlsx file content and return the table.
 ///
 /// - xlsx (bytes): Pass the xlsx file content by `read("path/to/file.xlsx", encoding: none)`.
 /// - sheet-index (integer): The index of the sheet to be parsed.
@@ -207,3 +207,23 @@
   )
 }
 
+/// Parse table pre-parsed by spreet and return the table. Styles in the table will be ignored but the cell content will be kept. Extra arguments can be passed to the table.
+///
+/// - dict (dictionary): spreet parsed table.
+/// - sheet-index (integer): The index of the sheet to be parsed.
+/// - args (arguments): Other arguments for the table.
+/// -> 
+#let spreet-parser(
+  dict,
+  sheet-index: 0,
+  ..args,
+) = {
+  let sheets = dict.keys()
+  let cells = dict.at(sheets.at(sheet-index))
+  let columns = cells.first().len()
+  table(
+    columns: columns,
+    ..args,
+    ..cells.flatten().map(cell => table.cell()[#cell])
+  )
+}
