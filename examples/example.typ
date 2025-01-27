@@ -63,10 +63,9 @@
   read("test.xlsx", encoding: none),
   parse-header: true,
   parse-stroke: false,
-  prepend-elems: (table.hline()),
   stroke: (_, y) => {
     if y == 0 {
-      return (bottom: black)
+      return (top: black, bottom: black)
     }
   },
   table.hline(),
