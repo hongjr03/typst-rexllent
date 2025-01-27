@@ -41,7 +41,7 @@ By toggling parameters below, you can customize the output table:
 > [!NOTE]
 > Notice that 0pt height or 0pt width will be parsed as `auto`. Disable `parse-table-style` to prevent this behavior and set the width and height manually.
 
-Extra arguments passed to `xlsx-parser` function will be passed to `table`. Feel free to customize the output table. For the prepend argument, you should pass them as array to `prepend-elems` parameter.
+Extra arguments passed to `xlsx-parser` function will be passed to `table`. Feel free to customize the output table. For the prepend elements(for example: header, hline) you should pass them as array to `prepend-elems` parameter.
 
 ```typ
 #xlsx-parser(
