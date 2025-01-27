@@ -1,6 +1,6 @@
 #set page(width: auto, height: auto, margin: 1em)
 
-#import "@preview/rexllent:0.3.0": xlsx-parser
+#import "/typst-package/lib.typ": xlsx-parser
 
 #xlsx-parser(read("test.xlsx", encoding: none))
 
@@ -60,5 +60,14 @@
 #pagebreak()
 
 #xlsx-parser(
-  read("/tests/data/default.xlsx", encoding: none),
+  read("test.xlsx", encoding: none),
+  parse-header: true,
+  parse-stroke: false,
+  prepend-elems: (table.hline()),
+  stroke: (_, y) => {
+    if y == 0 {
+      return (bottom: black)
+    }
+  },
+  table.hline(),
 )

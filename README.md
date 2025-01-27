@@ -36,11 +36,29 @@ By toggling parameters below, you can customize the output table:
 - `parse-stroke`: Parse cell stroke, default is `true`.
 - `parse-fill`: Parse cell fill, default is `true`.
 - `parse-font`: Parse font style, default is `true`.
+- `parse-header`: Parse header row, default is `false`.
 
 > [!NOTE]
 > Notice that 0pt height or 0pt width will be parsed as `auto`. Disable `parse-table-style` to prevent this behavior and set the width and height manually.
 
-Extra arguments passed to `xlsx-parser` function will be passed to `table`. Feel free to customize the output table.
+Extra arguments passed to `xlsx-parser` function will be passed to `table`. Feel free to customize the output table. For the prepend argument, you should pass them as array to `prepend-elems` parameter.
+
+```typ
+#xlsx-parser(
+  read("test.xlsx", encoding: none),
+  parse-header: true,
+  parse-stroke: false,
+  prepend-elems: (table.hline()),
+  stroke: (_, y) => {
+    if y == 0 {
+      return (bottom: black)
+    }
+  },
+  table.hline(),
+)
+```
+
+![three-line-table](assets/three-line-table.png)
 
 ## Work with Spreet
 
