@@ -9,7 +9,7 @@ ReXLlenT is a typst package that helps you:
 - Convert Excel **xlsx** tables to typst tables, powered by wasm.
 - Convert [Spreet](https://github.com/lublak/typst-spreet-package) parsed tables to typst tables. (Supports excel/opendocument spreadsheets but doesn't support parsing styles or merge cells.)
 
-## Quick Start
+## Usage
 
 Start by importing the package:
 
