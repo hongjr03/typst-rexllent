@@ -16,7 +16,7 @@ umya-spreadsheet = { version = "2.2.2", features = ["js"] }
 getrandom = { version = "0.2.15", features = ["custom"] }
 wasm-minimal-protocol = { git = "https://github.com/astrale-sharp/wasm-minimal-protocol.git", rev = "637508c", optional = true }
 serde = { version = "1.0.217", features = ["derive"] }
-toml = "0.8.19"
+toml = "0.8.20"
 
 [profile.release]
 opt-level = "s"
