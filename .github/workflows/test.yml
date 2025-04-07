@@ -31,7 +31,7 @@ jobs:
           version: 'v0.13.1'
 
       - name: Run test suite
-        run: tt run
+        run: tt run --root .
 
       - name: Archive diffs
         uses: actions/upload-artifact@v4
