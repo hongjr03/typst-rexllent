@@ -1,13 +1,17 @@
-// cell_utils.rs
-use umya_spreadsheet::{BorderStyleValues, Cell, HorizontalAlignmentValues, Spreadsheet, UnderlineValues, VerticalAlignmentValues};
 use crate::data_structures::{Alignment, Border, FontStyle};
+use umya_spreadsheet::{
+    BorderStyleValues, Cell, HorizontalAlignmentValues, Spreadsheet, UnderlineValues,
+    VerticalAlignmentValues,
+};
 
-pub fn cell_value(cell: &Cell) -> Result<String, String> {
+pub fn cell_value(cell: &Cell, formatted: bool) -> Result<String, String> {
     if cell.get_raw_value().is_error() {
         return Err(format!(
             "Error in cell {}",
             cell.get_coordinate().to_string()
         ));
+    } else if formatted {
+        Ok(cell.get_formatted_value())
     } else {
         Ok(cell.get_value().to_string())
     }
