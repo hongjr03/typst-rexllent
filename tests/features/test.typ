@@ -1,4 +1,4 @@
-#set page(width: 300pt, height: auto)
+#set page(width: auto, height: auto, margin: 1em)
 #show heading: it => pagebreak(weak: true)
 
 #import "/typst-package/lib.typ": xlsx-parser, spreet-parser
@@ -30,6 +30,12 @@
 === merged
 
 #xlsx-parser(read("/tests/data/cell/merged.xlsx", encoding: none))
+
+=== formatted
+
+#xlsx-parser(read("/tests/data/cell/formatted.xlsx", encoding: none), formatted-cell: true)
+
+#xlsx-parser(read("/tests/data/cell/formatted.xlsx", encoding: none), formatted-cell: false)
 
 == font
 
@@ -85,6 +91,8 @@
 
 #xlsx-parser(read("/tests/data/table/hidden_row.xlsx", encoding: none))
 
+
+
 // == not_supported
 
 // === lowercase
@@ -104,3 +112,4 @@
 #import "@preview/spreet:0.1.0"
 
 #spreet-parser(spreet.decode(read("/tests/data/default.ods", encoding: none)))
+
