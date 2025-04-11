@@ -10,7 +10,7 @@ crate-type = ["cdylib"]
 [features]
 
 [dependencies]
-umya-spreadsheet = { git = "https://github.com/sjfhsjfh/umya-spreadsheet.git", rev = "6810557942a3174ff484f970f7b643d10ba1a6e9" }
+umya-spreadsheet = { git = "https://github.com/sjfhsjfh/umya-spreadsheet.git", rev = "6810557942a3174ff484f970f7b643d10ba1a6e9", default-features = false }
 toml = "0.8.20"
 serde = { version = "1.0.219", features = ["derive"] }
 typst-wasm-protocol = "0.0.2"
