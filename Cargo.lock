@@ -1377,6 +1377,27 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1dccffe3ce07af9386bfd29e80c0ab1a8205a2fc34e4bcd40364df902cfa8f3f"
 
 [[package]]
+name = "typst-wasm-macros"
+version = "0.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0df89cf4e273dca9ca1a971f86d5bc12f7ec79d008fbc11037dbc8f821196316"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+ "venial",
+]
+
+[[package]]
+name = "typst-wasm-protocol"
+version = "0.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1e74aabca9c7bb93eb529915add290b6cc11231f3fb36f2c6080007a658699df"
+dependencies = [
+ "typst-wasm-macros",
+]
+
+[[package]]
 name = "ucd-trie"
 version = "0.1.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1435,9 +1456,9 @@ dependencies = [
 
 [[package]]
 name = "venial"
-version = "0.5.0"
+version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "61584a325b16f97b5b25fcc852eb9550843a251057a5e3e5992d2376f3df4bb2"
+checksum = "9a42528baceab6c7784446df2a10f4185078c39bf73dc614f154353f1a6b1229"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1529,16 +1550,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "wasm-minimal-protocol"
-version = "0.1.0"
-source = "git+https://github.com/astrale-sharp/wasm-minimal-protocol.git?rev=637508c#637508c184c7bfad7caadf109e2fa3871d99c57e"
-dependencies = [
- "proc-macro2",
- "quote",
- "venial",
-]
-
-[[package]]
 name = "weezl"
 version = "0.1.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1627,8 +1638,8 @@ version = "0.1.0"
 dependencies = [
  "serde",
  "toml",
+ "typst-wasm-protocol",
  "umya-spreadsheet",
- "wasm-minimal-protocol",
 ]
 
 [[package]]

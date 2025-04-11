@@ -215,6 +215,7 @@
   parse-fill: true,
   parse-font: true,
   parse-header: false,
+  formatted-cell: false,
   ..append-args,
 ) = {
   let data = p.to_typst(
@@ -224,6 +225,7 @@
     bytes(if parse-stroke { "true" } else { "false" }),
     bytes(if parse-fill { "true" } else { "false" }),
     bytes(if parse-font { "true" } else { "false" }),
+    bytes(if formatted-cell { "true" } else { "false" }),
   )
   parse_excel_table(
     if sys.version < version(0, 13, 0) {
