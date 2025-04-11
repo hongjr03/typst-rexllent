@@ -13,7 +13,7 @@ register_custom_getrandom!(always_fail);
 
 use typst_wasm_protocol::wasm_export;
 
-use std::io::Cursor;
+use std::{io::Cursor, str};
 use umya_spreadsheet::{reader, Cell, Spreadsheet};
 mod cell_utils;
 mod data_structures;
@@ -60,7 +60,7 @@ pub fn to_typst(
         .map_err(|e| format!("Failed to parse parse_font_style: {}", e))?
         .parse()
         .map_err(|e| format!("Failed to parse parse_font_style: {}", e))?;
-    let formatted: bool = String::from_utf8(formatted_cell.to_vec())
+    let formatted: bool = str::from_utf8(formatted_cell)
         .map_err(|e| format!("Failed to parse formatted_cell: {}", e))?
         .parse()
         .map_err(|e| format!("Failed to parse formatted_cell: {}", e))?;
