@@ -1,5 +1,3 @@
-#![cfg_attr(feature = "typst-plugin", allow(missing_docs))]
-
 use core::num::NonZeroU32;
 use getrandom::{register_custom_getrandom, Error};
 
@@ -12,24 +10,23 @@ pub fn always_fail(_buf: &mut [u8]) -> Result<(), Error> {
 
 register_custom_getrandom!(always_fail);
 
+
+use typst_wasm_protocol::wasm_export;
+
 use std::io::Cursor;
 use umya_spreadsheet::{reader, Cell, Spreadsheet};
-use wasm_minimal_protocol::*;
-
-wasm_minimal_protocol::initiate_protocol!();
-
+mod cell_utils;
 mod data_structures;
 mod utils;
 mod worksheet_utils;
-mod cell_utils;
 // mod tests;
 
+use cell_utils::*;
 use data_structures::*;
 use utils::*;
 use worksheet_utils::*;
-use cell_utils::*;
 
-#[cfg_attr(feature = "typst-plugin", wasm_func)]
+#[wasm_export]
 pub fn to_typst(
     bytes: &[u8],
     sheet_index: &[u8],
@@ -37,7 +34,8 @@ pub fn to_typst(
     parse_border: &[u8],
     parse_bg_color: &[u8],
     parse_font_style: &[u8],
-) -> Result<Vec<u8>, String> {
+    formatted_cell: &[u8],
+) -> Result<String, String> {
     let file = Cursor::new(bytes);
     let book: Spreadsheet = reader::xlsx::read_reader(file, true)
         .map_err(|e| format!("Failed to read Excel file: {}", e))?;
@@ -62,6 +60,10 @@ pub fn to_typst(
         .map_err(|e| format!("Failed to parse parse_font_style: {}", e))?
         .parse()
         .map_err(|e| format!("Failed to parse parse_font_style: {}", e))?;
+    let formatted: bool = String::from_utf8(formatted_cell.to_vec())
+        .map_err(|e| format!("Failed to parse formatted_cell: {}", e))?
+        .parse()
+        .map_err(|e| format!("Failed to parse formatted_cell: {}", e))?;
     let worksheet = book
         .get_sheet(&sheet_index)
         .ok_or_else(|| "Failed to get worksheet".to_string())?;
@@ -162,7 +164,7 @@ pub fn to_typst(
                     };
 
                     row_data.cells.push(CellData {
-                        value: cell_value(cell)?,
+                        value: cell_value(cell, formatted)?,
                         column: col_num,
                         style: cell_style,
                     });
@@ -178,6 +180,5 @@ pub fn to_typst(
     let toml_string =
         toml::to_string(&table_data).map_err(|e| format!("Failed to serialize to TOML: {}", e))?;
 
-    let buffer = Vec::from(toml_string.as_bytes());
-    Ok(buffer)
+    Ok(toml_string)
 }

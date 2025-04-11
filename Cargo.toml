@@ -8,15 +8,13 @@ edition = "2021"
 crate-type = ["cdylib"]
 
 [features]
-typst-plugin = ["wasm-minimal-protocol"]
-default = ["typst-plugin"]
 
 [dependencies]
-umya-spreadsheet = { version = "2.2.2", features = ["js"] }
+umya-spreadsheet = { version = "2.2.3", features = ["js"] }
 getrandom = { version = "0.2.15", features = ["custom"] }
-wasm-minimal-protocol = { git = "https://github.com/astrale-sharp/wasm-minimal-protocol.git", rev = "637508c", optional = true }
-serde = { version = "1.0.217", features = ["derive"] }
+serde = { version = "1.0.219", features = ["derive"] }
 toml = "0.8.20"
+typst-wasm-protocol = "0.0.2"
 
 [profile.release]
 opt-level = "s"
