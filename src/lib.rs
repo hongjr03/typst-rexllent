@@ -1,33 +1,21 @@
 #![cfg_attr(feature = "typst-plugin", allow(missing_docs))]
 
-use core::num::NonZeroU32;
-use getrandom::{register_custom_getrandom, Error};
-
-// Some application-specific error code
-const MY_CUSTOM_ERROR_CODE: u32 = Error::CUSTOM_START + 42;
-pub fn always_fail(_buf: &mut [u8]) -> Result<(), Error> {
-    let code = NonZeroU32::new(MY_CUSTOM_ERROR_CODE).unwrap();
-    Err(Error::from(code))
-}
-
-register_custom_getrandom!(always_fail);
-
 use std::io::Cursor;
 use umya_spreadsheet::{reader, Cell, Spreadsheet};
 use wasm_minimal_protocol::*;
 
 wasm_minimal_protocol::initiate_protocol!();
 
+mod cell_utils;
 mod data_structures;
 mod utils;
 mod worksheet_utils;
-mod cell_utils;
 // mod tests;
 
+use cell_utils::*;
 use data_structures::*;
 use utils::*;
 use worksheet_utils::*;
-use cell_utils::*;
 
 #[cfg_attr(feature = "typst-plugin", wasm_func)]
 pub fn to_typst(
