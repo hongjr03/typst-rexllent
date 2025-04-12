@@ -26,6 +26,8 @@ pub struct CellData {
     pub value: String,
     pub column: u32,
     pub style: Option<CellStyle>,
+    pub format: String,
+    pub data_type: String,
 }
 
 #[derive(Serialize, Deserialize)]

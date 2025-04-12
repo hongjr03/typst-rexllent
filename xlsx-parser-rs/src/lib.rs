@@ -21,7 +21,6 @@ pub fn to_typst(
     parse_border: &[u8],
     parse_bg_color: &[u8],
     parse_font_style: &[u8],
-    formatted_cell: &[u8],
 ) -> Result<String, String> {
     // Parse arguments from byte arrays
     let sheet_index = parse_arg::<usize>(sheet_index, "sheet index")?;
@@ -29,7 +28,7 @@ pub fn to_typst(
     let parse_border = parse_arg::<bool>(parse_border, "parse_border")?;
     let parse_bg_color = parse_arg::<bool>(parse_bg_color, "parse_bg_color")?;
     let parse_font_style = parse_arg::<bool>(parse_font_style, "parse_font_style")?;
-    let formatted = parse_arg::<bool>(formatted_cell, "formatted_cell")?;
+
     // Read Excel file
     let file = Cursor::new(bytes);
     let book: Spreadsheet = reader::xlsx::read_reader(file, true)
@@ -47,7 +46,6 @@ pub fn to_typst(
         parse_border,
         parse_bg_color,
         parse_font_style,
-        formatted,
     )?;
 
     // Convert to TOML
@@ -76,7 +74,6 @@ fn build_table_data(
     parse_border: bool,
     parse_bg_color: bool,
     parse_font_style: bool,
-    formatted: bool,
 ) -> Result<TableData, String> {
     let (max_col, max_row) = get_table_dimensions(worksheet)?;
 
@@ -129,7 +126,6 @@ fn build_table_data(
         parse_border,
         parse_bg_color,
         parse_font_style,
-        formatted,
     )?;
 
     Ok(table_data)
@@ -146,7 +142,6 @@ fn process_rows(
     parse_border: bool,
     parse_bg_color: bool,
     parse_font_style: bool,
-    formatted: bool,
 ) -> Result<(), String> {
     for row_num in 1..=max_row {
         let row = worksheet.get_collection_by_row(&row_num);
@@ -179,7 +174,9 @@ fn process_rows(
                     );
 
                     row_data.cells.push(CellData {
-                        value: cell_value(cell, formatted)?,
+                        data_type: cell_type(cell)?,
+                        format: cell_format_code(cell)?,
+                        value: cell_value(cell)?,
                         column: col_num,
                         style: cell_style,
                     });

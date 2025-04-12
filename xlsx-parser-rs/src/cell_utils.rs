@@ -1,17 +1,42 @@
 use crate::data_structures::{Alignment, Border, FontStyle};
 use umya_spreadsheet::{
-    BorderStyleValues, Cell, HorizontalAlignmentValues, Spreadsheet, UnderlineValues,
-    VerticalAlignmentValues,
+    BorderStyleValues, Cell, HorizontalAlignmentValues, NumberingFormat, Spreadsheet,
+    UnderlineValues, VerticalAlignmentValues,
 };
 
-pub fn cell_value(cell: &Cell, formatted: bool) -> Result<String, String> {
+pub fn cell_type(cell: &Cell) -> Result<String, String> {
     if cell.get_raw_value().is_error() {
-        Err(format!(
+        return Err(format!(
             "Error in cell {}",
             cell.get_coordinate().to_string()
-        ))
-    } else if formatted {
-        Ok(cell.get_formatted_value())
+        ));
+    } else {
+        Ok(cell.get_data_type().to_string())
+    }
+}
+
+pub fn cell_format_code(cell: &Cell) -> Result<String, String> {
+    if cell.get_raw_value().is_error() {
+        return Err(format!(
+            "Error in cell {}",
+            cell.get_coordinate().to_string()
+        ));
+    } else {
+        Ok(cell
+            .get_style()
+            .get_number_format()
+            .unwrap_or(&NumberingFormat::default())
+            .get_format_code()
+            .to_string())
+    }
+}
+
+pub fn cell_value(cell: &Cell) -> Result<String, String> {
+    if cell.get_raw_value().is_error() {
+        return Err(format!(
+            "Error in cell {}",
+            cell.get_coordinate().to_string()
+        ));
     } else {
         Ok(cell.get_value().to_string())
     }
