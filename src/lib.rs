@@ -1,5 +1,3 @@
-
-
 use typst_wasm_protocol::wasm_export;
 
 use std::{io::Cursor, str};
@@ -25,38 +23,61 @@ pub fn to_typst(
     parse_font_style: &[u8],
     formatted_cell: &[u8],
 ) -> Result<String, String> {
+    // Parse arguments from byte arrays
+    let sheet_index = parse_arg::<usize>(sheet_index, "sheet index")?;
+    let parse_alignment = parse_arg::<bool>(parse_alignment, "parse_alignment")?;
+    let parse_border = parse_arg::<bool>(parse_border, "parse_border")?;
+    let parse_bg_color = parse_arg::<bool>(parse_bg_color, "parse_bg_color")?;
+    let parse_font_style = parse_arg::<bool>(parse_font_style, "parse_font_style")?;
+    let formatted = parse_arg::<bool>(formatted_cell, "formatted_cell")?;
+    // Read Excel file
     let file = Cursor::new(bytes);
     let book: Spreadsheet = reader::xlsx::read_reader(file, true)
         .map_err(|e| format!("Failed to read Excel file: {}", e))?;
-    // parse string -> bytes -> usize
-    let sheet_index: usize = String::from_utf8(sheet_index.to_vec())
-        .map_err(|e| format!("Failed to parse sheet index: {}", e))?
-        .parse()
-        .map_err(|e| format!("Failed to parse sheet index: {}", e))?;
-    let parse_alignment: bool = String::from_utf8(parse_alignment.to_vec())
-        .map_err(|e| format!("Failed to parse parse_alignment: {}", e))?
-        .parse()
-        .map_err(|e| format!("Failed to parse parse_alignment: {}", e))?;
-    let parse_border: bool = String::from_utf8(parse_border.to_vec())
-        .map_err(|e| format!("Failed to parse parse_border: {}", e))?
-        .parse()
-        .map_err(|e| format!("Failed to parse parse_border: {}", e))?;
-    let parse_bg_color: bool = String::from_utf8(parse_bg_color.to_vec())
-        .map_err(|e| format!("Failed to parse parse_bg_color: {}", e))?
-        .parse()
-        .map_err(|e| format!("Failed to parse parse_bg_color: {}", e))?;
-    let parse_font_style: bool = String::from_utf8(parse_font_style.to_vec())
-        .map_err(|e| format!("Failed to parse parse_font_style: {}", e))?
-        .parse()
-        .map_err(|e| format!("Failed to parse parse_font_style: {}", e))?;
-    let formatted: bool = str::from_utf8(formatted_cell)
-        .map_err(|e| format!("Failed to parse formatted_cell: {}", e))?
-        .parse()
-        .map_err(|e| format!("Failed to parse formatted_cell: {}", e))?;
+
     let worksheet = book
         .get_sheet(&sheet_index)
         .ok_or_else(|| "Failed to get worksheet".to_string())?;
 
+    // Build table data
+    let table_data = build_table_data(
+        worksheet,
+        &book,
+        parse_alignment,
+        parse_border,
+        parse_bg_color,
+        parse_font_style,
+        formatted,
+    )?;
+
+    // Convert to TOML
+    let toml_string =
+        toml::to_string(&table_data).map_err(|e| format!("Failed to serialize to TOML: {}", e))?;
+
+    Ok(toml_string)
+}
+
+// Helper function to parse arguments from byte arrays
+fn parse_arg<T: std::str::FromStr>(arg: &[u8], arg_name: &str) -> Result<T, String>
+where
+    T::Err: std::fmt::Display,
+{
+    str::from_utf8(arg)
+        .map_err(|e| format!("Failed to parse {}: {}", arg_name, e))?
+        .parse()
+        .map_err(|e| format!("Failed to parse {}: {}", arg_name, e))
+}
+
+// Function to build the table data structure
+fn build_table_data(
+    worksheet: &umya_spreadsheet::Worksheet,
+    book: &Spreadsheet,
+    parse_alignment: bool,
+    parse_border: bool,
+    parse_bg_color: bool,
+    parse_font_style: bool,
+    formatted: bool,
+) -> Result<TableData, String> {
     let (max_col, max_row) = get_table_dimensions(worksheet)?;
 
     let mut table_data = TableData {
@@ -70,15 +91,14 @@ pub fn to_typst(
         merged_cells: Vec::new(),
     };
 
-    // 处理表格尺寸
-
+    // Process table dimensions
     let properties = worksheet.get_sheet_format_properties();
     table_data.dimensions.columns =
         get_column_widths(worksheet, max_col, *properties.get_default_column_width());
     table_data.dimensions.rows =
         get_row_heights(worksheet, max_row, *properties.get_default_row_height());
 
-    // 处理合并单元格
+    // Process merged cells
     for merge_cell in worksheet.get_merge_cells() {
         let range = merge_cell.get_range().to_string();
         let (start, end) = parse_merge_range(&range);
@@ -97,7 +117,37 @@ pub fn to_typst(
             },
         });
     }
-    // 处理行数据
+
+    // Process row data
+    process_rows(
+        worksheet,
+        book,
+        &mut table_data,
+        max_row,
+        max_col,
+        parse_alignment,
+        parse_border,
+        parse_bg_color,
+        parse_font_style,
+        formatted,
+    )?;
+
+    Ok(table_data)
+}
+
+// Process rows and cells
+fn process_rows(
+    worksheet: &umya_spreadsheet::Worksheet,
+    book: &Spreadsheet,
+    table_data: &mut TableData,
+    max_row: u32,
+    max_col: u32,
+    parse_alignment: bool,
+    parse_border: bool,
+    parse_bg_color: bool,
+    parse_font_style: bool,
+    formatted: bool,
+) -> Result<(), String> {
     for row_num in 1..=max_row {
         let row = worksheet.get_collection_by_row(&row_num);
         let mut row_data = RowData {
@@ -105,52 +155,28 @@ pub fn to_typst(
             cells: Vec::new(),
         };
 
-        // 创建一个映射来存储每列的单元格
+        // Map to store cells by column
         let mut col_cell_map: Vec<Option<&Cell>> = vec![None; max_col as usize];
         for cell in row {
             let (col_num, _) = parse_cell_reference(&cell.get_coordinate().to_string());
             col_cell_map[(col_num - 1) as usize] = Some(cell);
         }
 
-        // 处理每一列
+        // Process each column
         for col_num in 1..=max_col {
-            // 检查是否是被合并的单元格
-            let is_merged = table_data.merged_cells.iter().any(|mc| {
-                row_num >= mc.start.row
-                    && row_num <= mc.end.row
-                    && col_num >= mc.start.column
-                    && col_num <= mc.end.column
-                    && !(row_num == mc.start.row && col_num == mc.start.column)
-            });
+            // Check if it's a merged cell
+            let is_merged = is_merged_cell(table_data, row_num, col_num);
 
             if !is_merged {
                 if let Some(Some(cell)) = col_cell_map.get((col_num - 1) as usize) {
-                    let cell_style = if parse_alignment || parse_font_style {
-                        Some(CellStyle {
-                            alignment: if parse_alignment {
-                                get_cell_alignment(cell)
-                            } else {
-                                None
-                            },
-                            border: if parse_border {
-                                get_cell_border(cell)
-                            } else {
-                                None
-                            },
-                            color: if parse_bg_color {
-                                get_cell_bg_color(cell, &book)
-                            } else {
-                                None
-                            },
-                            font: if parse_font_style {
-                                get_cell_font_style(cell, &book)
-                            } else {
-                                None
-                            },
-                        })
-                    } else {
-                        None
-                    };
+                    let cell_style = create_cell_style(
+                        cell,
+                        book,
+                        parse_alignment,
+                        parse_border,
+                        parse_bg_color,
+                        parse_font_style,
+                    );
 
                     row_data.cells.push(CellData {
                         value: cell_value(cell, formatted)?,
@@ -165,9 +191,53 @@ pub fn to_typst(
             table_data.rows.push(row_data);
         }
     }
+    Ok(())
+}
 
-    let toml_string =
-        toml::to_string(&table_data).map_err(|e| format!("Failed to serialize to TOML: {}", e))?;
+// Check if cell is part of a merged range (except the top-left cell)
+fn is_merged_cell(table_data: &TableData, row_num: u32, col_num: u32) -> bool {
+    table_data.merged_cells.iter().any(|mc| {
+        row_num >= mc.start.row
+            && row_num <= mc.end.row
+            && col_num >= mc.start.column
+            && col_num <= mc.end.column
+            && !(row_num == mc.start.row && col_num == mc.start.column)
+    })
+}
 
-    Ok(toml_string)
+// Create cell style based on parsing flags
+fn create_cell_style(
+    cell: &Cell,
+    book: &Spreadsheet,
+    parse_alignment: bool,
+    parse_border: bool,
+    parse_bg_color: bool,
+    parse_font_style: bool,
+) -> Option<CellStyle> {
+    if parse_alignment || parse_border || parse_bg_color || parse_font_style {
+        Some(CellStyle {
+            alignment: if parse_alignment {
+                get_cell_alignment(cell)
+            } else {
+                None
+            },
+            border: if parse_border {
+                get_cell_border(cell)
+            } else {
+                None
+            },
+            color: if parse_bg_color {
+                get_cell_bg_color(cell, book)
+            } else {
+                None
+            },
+            font: if parse_font_style {
+                get_cell_font_style(cell, book)
+            } else {
+                None
+            },
+        })
+    } else {
+        None
+    }
 }

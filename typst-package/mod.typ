@@ -1,73 +1,99 @@
 #let p = plugin("rexllent.wasm")
 
-// 辅助函数：创建单元格内容
+// 处理RGB颜色转换
+#let to-rgb(color) = {
+  if color == none { return none }
+  rgb(color)
+}
+
+// 处理尺寸转换
+#let to-size(value, unit) = {
+  if value == none or value == 0.0 { return auto }
+  eval(str(value) + unit)
+}
+
+// 创建文本样式
+#let apply-text-style(content, font) = {
+  if font == none { return content }
+
+  let text_args = (:)
+  if font.bold { text_args.insert("weight", "bold") }
+  if font.italic { text_args.insert("style", "italic") }
+  if font.size != none { text_args.insert("size", to-size(font.size, "pt")) }
+  if font.color != none { text_args.insert("fill", to-rgb(font.color)) }
+
+  let styled = text(..text_args)[#content]
+
+  if font.underline { styled = underline[#styled] }
+  if font.strike { styled = strike[#styled] }
+
+  return styled
+}
+
+// 处理单元格对齐方式
+#let process-alignment(alignment) = {
+  if alignment == none { return none }
+
+  let align = ()
+  if alignment.horizontal != "default" {
+    align.push(alignment.horizontal)
+  }
+  if alignment.vertical != "default" {
+    // 垂直居中在typst中用"horizon"表示
+    let v_align = if alignment.vertical == "center" { "horizon" } else { alignment.vertical }
+    align.push(v_align)
+  }
+
+  if align.len() > 0 {
+    return eval(align.join("+"))
+  }
+  return none
+}
+
+// 辅助函数：创建单元格内容和样式
 #let create_cell_content(cell) = {
-  if not cell.keys().contains("style") or cell.style == none { return ({ }, cell.value) }
+  if not cell.keys().contains("style") or cell.style == none {
+    return ({ }, cell.value)
+  }
 
   let content = cell.value
   let style = cell.style
+  let cell_args = (:)
 
   // 处理字体样式
   if style.keys().contains("font") and style.font != none {
-    let font = style.font
-    let text_args = (:)
-
-    if font.bold { text_args.insert("weight", "bold") }
-    if font.italic { text_args.insert("style", "italic") }
-    if font.size != none { text_args.insert("size", eval(str(font.size) + "pt")) }
-    if font.color != none { text_args.insert("fill", rgb(font.color)) }
-
-    content = text(..text_args)[#content]
-
-    if font.underline { content = underline[#content] }
-    if font.strike { content = strike[#content] }
+    content = apply-text-style(content, style.font)
   }
 
-  let cell_args = (:)
-
   // 处理对齐
-  if style.keys().contains("alignment") and style.alignment != none {
-    let align = ()
-
-    if style.alignment.horizontal != "default" {
-      align.push(style.alignment.horizontal)
-    }
-    if style.alignment.vertical != "default" {
-      let v_align = if style.alignment.vertical == "center" {
-        "horizon"
-      } else {
-        style.alignment.vertical
-      }
-      align.push(v_align)
-    }
-
-    if align.len() > 0 {
-      cell_args.insert("align", eval(align.join("+")))
+  if style.keys().contains("alignment") {
+    let align = process-alignment(style.alignment)
+    if align != none {
+      cell_args.insert("align", align)
     }
   }
 
   // 处理边框
   if style.keys().contains("border") and style.border != none {
-    let borders = style.border
     let stroke_args = (:)
     for (border, value) in style.border {
       if value == false {
         stroke_args.insert(border, none)
       }
     }
-    cell_args.insert("stroke", stroke_args)
     if stroke_args.len() > 0 {
       cell_args.insert("stroke", stroke_args)
     }
   }
 
   // 处理填充
-  if style.keys().contains("color") and style.color != none {
-    let fill = style.color
+  if style.keys().contains("color") {
+    let fill = to-rgb(style.color)
     if fill != none {
-      cell_args.insert("fill", rgb(fill))
+      cell_args.insert("fill", fill)
     }
   }
+
   return (cell_args, content)
 }
 
@@ -227,6 +253,7 @@
     bytes(if parse-font { "true" } else { "false" }),
     bytes(if formatted-cell { "true" } else { "false" }),
   )
+  // toml(data)
   parse_excel_table(
     if sys.version < version(0, 13, 0) {
       toml.decode(data)
