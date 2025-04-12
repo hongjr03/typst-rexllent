@@ -58,7 +58,14 @@
     return ({ }, cell.value)
   }
 
-  let content = if formatted-cell and cell.data_type == "n" {
+  let content = if (
+    // Self::String(_) => "s",
+    // Self::RichText(_) => "s",
+    // Self::Numeric(_) => "n",
+    // Self::Bool(_) => "b",
+    // Self::Error(_) => "e",
+    formatted-cell and cell.format != "General" and cell.data_type == "n"
+  ) {
     render(cell.format, float(cell.value))
   } else { cell.value }
   let style = cell.style
