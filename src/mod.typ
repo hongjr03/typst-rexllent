@@ -1,4 +1,4 @@
-#import "ssf.typ": render
+#import "numfmt.typ": format, format-color
 
 #let p = plugin("rexllent.wasm")
 
@@ -53,7 +53,7 @@
 }
 
 // 辅助函数：创建单元格内容和样式
-#let create_cell_content(cell, formatted-cell) = {
+#let create_cell_content(cell, formatted-cell, locale) = {
   if not cell.keys().contains("style") or cell.style == none {
     return ({ }, cell.value)
   }
@@ -66,7 +66,11 @@
     // Self::Error(_) => "e",
     formatted-cell and cell.format != "General" and cell.data_type == "n"
   ) {
-    render(cell.format, float(cell.value))
+    format(
+      cell.format,
+      float(cell.value),
+      (locale: locale),
+    )
   } else { cell.value }
   let style = cell.style
   let cell_args = (:)
@@ -105,6 +109,21 @@
     }
   }
 
+  if formatted-cell {
+    let format = cell.format
+    // replace every string wrapped by [] with its lower case, using regex
+    let regex = regex("\[(.*?)\]")
+    let format = format.replace(
+      regex,
+      m => lower(m.text),
+    )
+
+    let color = format-color(format, cell.value)
+    if color != none {
+      cell_args.insert("fill", color)
+    }
+  }
+
   return (cell_args, content)
 }
 
@@ -114,7 +133,8 @@
   parse-header: false,
   parse-table-style: true,
   parse-stroke: true,
-  formatted-cell: false,
+  parse-formatted-cell: false,
+  locale: none,
   ..args,
 ) = {
   // 解析维度信息
@@ -185,7 +205,7 @@
           )
 
           // 处理样式和内容
-          let (_cell_args, content) = create_cell_content(cell, formatted-cell)
+          let (_cell_args, content) = create_cell_content(cell, parse-formatted-cell, locale)
           cell_args += _cell_args
           if row.row_number == 1 and parse-header {
             header_cells.push(table.cell(..cell_args)[#content])
@@ -200,7 +220,7 @@
       // 处理普通单元格
       let cell = cell_map.at(str(col), default: none)
       if cell != none {
-        let (_cell_args, content) = create_cell_content(cell, formatted-cell)
+        let (_cell_args, content) = create_cell_content(cell, parse-formatted-cell, locale)
         if row.row_number == 1 and parse-header {
           header_cells.push(table.cell(.._cell_args)[#content])
         } else {
@@ -253,7 +273,8 @@
   parse-fill: true,
   parse-font: true,
   parse-header: false,
-  formatted-cell: false,
+  parse-formatted-cell: false,
+  locale: none,
   ..append-args,
 ) = {
   let data = p.to_typst(
@@ -275,7 +296,8 @@
     parse-header: parse-header,
     parse-table-style: parse-table-style,
     parse-stroke: parse-stroke,
-    formatted-cell: formatted-cell,
+    parse-formatted-cell: parse-formatted-cell,
+    locale: locale,
     ..append-args,
   )
 }

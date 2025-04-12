@@ -33,9 +33,9 @@
 
 === formatted
 
-#xlsx-parser(read("./data/cell/formatted.xlsx", encoding: none), formatted-cell: true)
+#xlsx-parser(read("./data/cell/formatted.xlsx", encoding: none), parse-formatted-cell: true)
 
-#xlsx-parser(read("./data/cell/formatted.xlsx", encoding: none), formatted-cell: false)
+#xlsx-parser(read("./data/cell/formatted.xlsx", encoding: none), parse-formatted-cell: true, locale: "zh-CN")
 
 == font
 
