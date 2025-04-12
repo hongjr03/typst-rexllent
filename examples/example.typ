@@ -1,6 +1,6 @@
 #set page(width: auto, height: auto, margin: 1em)
 
-#import "/typst-package/lib.typ": xlsx-parser
+#import "/src/lib.typ": xlsx-parser
 
 #xlsx-parser(read("test.xlsx", encoding: none))
 
