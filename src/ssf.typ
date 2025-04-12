@@ -3,6 +3,6 @@
 #let ssf-src = read("ssf.js")
 #let ssf-bytecode = compile-js(ssf-src)
 
-#let render(..args) = {
+#let format(..args) = {
   call-js-function(ssf-bytecode, "format", ..args)
 }
