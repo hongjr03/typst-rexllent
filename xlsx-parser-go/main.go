@@ -1,7 +1,12 @@
 package main
 
 import (
+	"fmt"
+	"os"
+	"strconv"
 	"unsafe"
+
+	"github.com/rexllent/xlsx-parser-go/xlsxparser"
 )
 
 // ===
@@ -26,85 +31,162 @@ func SendResultToHost(resBuf []byte) {
 
 // ===
 
+// 命令行模式的处理函数
+func cliMode() {
+	if len(os.Args) < 8 {
+		fmt.Println("用法：./xlsx-parser-go <excel 文件路径> <工作表索引> <解析对齐方式 (true/false)> <解析边框 (true/false)> <解析背景色 (true/false)> <解析字体样式 (true/false)> <格式化单元格 (true/false)>")
+		os.Exit(1)
+	}
+
+	// 读取 Excel 文件
+	filePath := os.Args[1]
+	fileBytes, err := os.ReadFile(filePath)
+	if err != nil {
+		fmt.Printf("读取文件失败: %v\n", err)
+		os.Exit(1)
+	}
+
+	// 解析参数
+	sheetIndex, err := strconv.Atoi(os.Args[2])
+	if err != nil {
+		fmt.Printf("解析工作表索引失败: %v\n", err)
+		os.Exit(1)
+	}
+
+	parseAlignment, err := strconv.ParseBool(os.Args[3])
+	if err != nil {
+		fmt.Printf("解析parseAlignment参数失败: %v\n", err)
+		os.Exit(1)
+	}
+
+	parseBorder, err := strconv.ParseBool(os.Args[4])
+	if err != nil {
+		fmt.Printf("解析parseBorder参数失败: %v\n", err)
+		os.Exit(1)
+	}
+
+	parseBgColor, err := strconv.ParseBool(os.Args[5])
+	if err != nil {
+		fmt.Printf("解析parseBgColor参数失败: %v\n", err)
+		os.Exit(1)
+	}
+
+	parseFontStyle, err := strconv.ParseBool(os.Args[6])
+	if err != nil {
+		fmt.Printf("解析parseFontStyle参数失败: %v\n", err)
+		os.Exit(1)
+	}
+
+	formatted, err := strconv.ParseBool(os.Args[7])
+	if err != nil {
+		fmt.Printf("解析formatted参数失败: %v\n", err)
+		os.Exit(1)
+	}
+
+	// 调用核心函数
+	result, err := xlsxparser.ToTypst(fileBytes, sheetIndex, parseAlignment, parseBorder, parseBgColor, parseFontStyle, formatted)
+	if err != nil {
+		fmt.Printf("处理Excel文件失败: %v\n", err)
+		os.Exit(1)
+	}
+
+	fmt.Println(result)
+}
+
 // main is required for the `wasip1` target, even if it isn't used.
-func main() {}
+func main() {
+	// 在非 WASM 环境中运行时，使用命令行模式
+	if os.Getenv("WASM_ENVIRONMENT") != "1" {
+		cliMode()
+	}
+}
 
-// // Helper functions to simplify working with WASM functions
-// func readArgs(totalLength int) []byte {
-// 	buf := make([]byte, totalLength)
-// 	WriteArgsToBuffer(buf)
-// 	return buf
-// }
+//go:export to_typst
+func toTypst(fileDataLen, argsLen int32) int32 {
+	// 分配缓冲区：文件数据 + 参数
+	buf := make([]byte, fileDataLen+argsLen)
+	WriteArgsToBuffer(buf)
 
-// func sendResult(data []byte) {
-// 	SendResultToHost(data)
-// }
+	// 分离文件数据和参数
+	fileData := buf[:fileDataLen]
+	argsData := buf[fileDataLen : fileDataLen+argsLen]
 
-// //go:export hello
-// func hello() int32 {
-// 	const message = "Hello from wasm!!!"
-// 	sendResult([]byte(message))
-// 	return 0
-// }
+	// 解析参数
+	// 参数格式：sheetIndex|parseAlignment|parseBorder|parseBgColor|parseFontStyle|formatted
+	args := string(argsData)
+	argValues := make([]string, 0)
+	for _, arg := range []byte(args) {
+		if arg == '|' {
+			continue
+		}
+		argValues = append(argValues, string(arg))
+	}
 
-// //go:export double_it
-// func doubleIt(arg1Len int32) int32 {
-// 	buf := readArgs(int(arg1Len))
+	if len(argValues) != 6 {
+		errorMsg := "参数格式错误，期望 6 个参数"
+		SendResultToHost([]byte(errorMsg))
+		return 1
+	}
 
-// 	result := make([]byte, arg1Len*2)
-// 	copy(result[:arg1Len], buf[:arg1Len])
-// 	copy(result[arg1Len:], buf[:arg1Len])
+	// 解析参数
+	sheetIndex, err := strconv.Atoi(argValues[0])
+	if err != nil {
+		errorMsg := fmt.Sprintf("解析工作表索引失败: %v", err)
+		SendResultToHost([]byte(errorMsg))
+		return 1
+	}
 
-// 	sendResult(result)
-// 	return 0
-// }
+	parseAlignment, err := strconv.ParseBool(argValues[1])
+	if err != nil {
+		errorMsg := fmt.Sprintf("解析parseAlignment参数失败: %v", err)
+		SendResultToHost([]byte(errorMsg))
+		return 1
+	}
 
-// //go:export concatenate
-// func concatenate(arg1Len, arg2Len int32) int32 {
-// 	buf := readArgs(int(arg1Len + arg2Len))
+	parseBorder, err := strconv.ParseBool(argValues[2])
+	if err != nil {
+		errorMsg := fmt.Sprintf("解析parseBorder参数失败: %v", err)
+		SendResultToHost([]byte(errorMsg))
+		return 1
+	}
 
-// 	result := make([]byte, arg1Len+arg2Len+1)
-// 	copy(result[:arg1Len], buf[:arg1Len])
-// 	result[arg1Len] = '*'
-// 	copy(result[arg1Len+1:], buf[arg1Len:arg1Len+arg2Len])
+	parseBgColor, err := strconv.ParseBool(argValues[3])
+	if err != nil {
+		errorMsg := fmt.Sprintf("解析parseBgColor参数失败: %v", err)
+		SendResultToHost([]byte(errorMsg))
+		return 1
+	}
 
-// 	sendResult(result)
-// 	return 0
-// }
+	parseFontStyle, err := strconv.ParseBool(argValues[4])
+	if err != nil {
+		errorMsg := fmt.Sprintf("解析parseFontStyle参数失败: %v", err)
+		SendResultToHost([]byte(errorMsg))
+		return 1
+	}
 
-// //go:export shuffle
-// func shuffle(arg1Len, arg2Len, arg3Len int) int32 {
-// 	argBuf := readArgs(arg1Len+arg2Len+arg3Len)
-// 	arg1 := argBuf[:arg1Len]
-// 	arg2 := argBuf[arg1Len : arg1Len+arg2Len]
-// 	arg3 := argBuf[arg1Len+arg2Len:]
+	formatted, err := strconv.ParseBool(argValues[5])
+	if err != nil {
+		errorMsg := fmt.Sprintf("解析formatted参数失败: %v", err)
+		SendResultToHost([]byte(errorMsg))
+		return 1
+	}
 
-// 	resBuf := make([]byte, 0, arg1Len+arg2Len+arg3Len+2)
-// 	resBuf = append(resBuf, arg3...)
-// 	resBuf = append(resBuf, '-')
-// 	resBuf = append(resBuf, arg1...)
-// 	resBuf = append(resBuf, '-')
-// 	resBuf = append(resBuf, arg2...)
+	// 调用核心函数处理 Excel 数据
+	result, err := xlsxparser.ToTypst(fileData, sheetIndex, parseAlignment, parseBorder, parseBgColor, parseFontStyle, formatted)
+	if err != nil {
+		errorMsg := fmt.Sprintf("处理Excel文件失败: %v", err)
+		SendResultToHost([]byte(errorMsg))
+		return 1
+	}
 
-// 	sendResult(resBuf)
-// 	return 0
-// }
+	// 发送结果
+	SendResultToHost([]byte(result))
+	return 0
+}
 
-// //go:export returns_ok
-// func returnsOk() int32 {
-// 	const message = "This is an `Ok`"
-// 	sendResult([]byte(message))
-// 	return 0
-// }
-
-// //go:export returns_err
-// func returnsErr() int32 {
-// 	const message = "This is an `Err`"
-// 	sendResult([]byte(message))
-// 	return 1
-// }
-
-// //go:export will_panic
-// func willPanic() int32 {
-// 	panic("Panicking, this message will not be seen...")
-// }
+//go:export version
+func version() int32 {
+	const versionInfo = "Rexllent XLSX Parser Go 1.0.0"
+	SendResultToHost([]byte(versionInfo))
+	return 0
+}
