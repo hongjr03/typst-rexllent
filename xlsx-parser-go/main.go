@@ -101,70 +101,71 @@ func main() {
 	}
 }
 
-//go:export to_typst
-func toTypst(fileDataLen, argsLen int32) int32 {
-	// 分配缓冲区：文件数据 + 参数
-	buf := make([]byte, fileDataLen+argsLen)
-	WriteArgsToBuffer(buf)
+//go:wasmexport to_typst
+func toTypst(fileDataLen, sheetIdxLen, parseAlignLen, parseStrokeLen, parseFillLen, parseFontLen, formatCellLen int32) int32 {
+	// 分配缓冲区用于所有参数
+	totalLen := fileDataLen + sheetIdxLen + parseAlignLen + parseStrokeLen + parseFillLen + parseFontLen + formatCellLen
+	argBuf := make([]byte, totalLen)
+	WriteArgsToBuffer(argBuf)
 
-	// 分离文件数据和参数
-	fileData := buf[:fileDataLen]
-	argsData := buf[fileDataLen : fileDataLen+argsLen]
+	// 分离文件数据和各个参数
+	fileData := argBuf[:fileDataLen]
+
+	offset := fileDataLen
+	sheetIdxData := argBuf[offset : offset+sheetIdxLen]
+	offset += sheetIdxLen
+
+	parseAlignData := argBuf[offset : offset+parseAlignLen]
+	offset += parseAlignLen
+
+	parseStrokeData := argBuf[offset : offset+parseStrokeLen]
+	offset += parseStrokeLen
+
+	parseFillData := argBuf[offset : offset+parseFillLen]
+	offset += parseFillLen
+
+	parseFontData := argBuf[offset : offset+parseFontLen]
+	offset += parseFontLen
+
+	formatCellData := argBuf[offset : offset+formatCellLen]
 
 	// 解析参数
-	// 参数格式：sheetIndex|parseAlignment|parseBorder|parseBgColor|parseFontStyle|formatted
-	args := string(argsData)
-	argValues := make([]string, 0)
-	for _, arg := range []byte(args) {
-		if arg == '|' {
-			continue
-		}
-		argValues = append(argValues, string(arg))
-	}
-
-	if len(argValues) != 6 {
-		errorMsg := "参数格式错误，期望 6 个参数"
-		SendResultToHost([]byte(errorMsg))
-		return 1
-	}
-
-	// 解析参数
-	sheetIndex, err := strconv.Atoi(argValues[0])
+	sheetIndex, err := strconv.Atoi(string(sheetIdxData))
 	if err != nil {
 		errorMsg := fmt.Sprintf("解析工作表索引失败: %v", err)
 		SendResultToHost([]byte(errorMsg))
 		return 1
 	}
 
-	parseAlignment, err := strconv.ParseBool(argValues[1])
+	parseAlignment, err := strconv.ParseBool(string(parseAlignData))
 	if err != nil {
 		errorMsg := fmt.Sprintf("解析parseAlignment参数失败: %v", err)
 		SendResultToHost([]byte(errorMsg))
 		return 1
 	}
 
-	parseBorder, err := strconv.ParseBool(argValues[2])
+	parseBorder, err := strconv.ParseBool(string(parseStrokeData))
 	if err != nil {
 		errorMsg := fmt.Sprintf("解析parseBorder参数失败: %v", err)
 		SendResultToHost([]byte(errorMsg))
 		return 1
 	}
 
-	parseBgColor, err := strconv.ParseBool(argValues[3])
+	parseBgColor, err := strconv.ParseBool(string(parseFillData))
 	if err != nil {
 		errorMsg := fmt.Sprintf("解析parseBgColor参数失败: %v", err)
 		SendResultToHost([]byte(errorMsg))
 		return 1
 	}
 
-	parseFontStyle, err := strconv.ParseBool(argValues[4])
+	parseFontStyle, err := strconv.ParseBool(string(parseFontData))
 	if err != nil {
 		errorMsg := fmt.Sprintf("解析parseFontStyle参数失败: %v", err)
 		SendResultToHost([]byte(errorMsg))
 		return 1
 	}
 
-	formatted, err := strconv.ParseBool(argValues[5])
+	formatted, err := strconv.ParseBool(string(formatCellData))
 	if err != nil {
 		errorMsg := fmt.Sprintf("解析formatted参数失败: %v", err)
 		SendResultToHost([]byte(errorMsg))
@@ -184,7 +185,7 @@ func toTypst(fileDataLen, argsLen int32) int32 {
 	return 0
 }
 
-//go:export version
+//go:wasmexport version
 func version() int32 {
 	const versionInfo = "Rexllent XLSX Parser Go 1.0.0"
 	SendResultToHost([]byte(versionInfo))
