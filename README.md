@@ -14,7 +14,7 @@ ReXLlenT is a typst package that helps you:
 Start by importing the package:
 
 ```typ
-#import "@preview/rexllent:0.3.0": xlsx-parser
+#import "@preview/rexllent:0.3.1": xlsx-parser
 ```
 
 Then you can use `xlsx-parser` function to convert your xlsx Excel table to typst table. Here is an example:
@@ -66,7 +66,7 @@ You can also convert Spreet parsed tables to typst tables. Here is an example:
 
 ```typ
 #import "@preview/spreet:0.1.0"
-#import "@preview/rexllent:0.3.0": spreet-parser
+#import "@preview/rexllent:0.3.1": spreet-parser
 
 #spreet-parser(spreet.decode(read("/tests/data/default.ods", encoding: none)))
 ```
