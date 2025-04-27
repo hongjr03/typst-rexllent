@@ -6,10 +6,10 @@ use umya_spreadsheet::{
 
 pub fn cell_value(cell: &Cell, formatted: bool) -> Result<String, String> {
     if cell.get_raw_value().is_error() {
-        return Err(format!(
+        Err(format!(
             "Error in cell {}",
             cell.get_coordinate().to_string()
-        ));
+        ))
     } else if formatted {
         Ok(cell.get_formatted_value())
     } else {

@@ -24,7 +24,7 @@ pub fn get_column_widths(worksheet: &Worksheet, max_col: u32, default_width: f64
     for col in worksheet.get_column_dimensions() {
         let col_idx = *col.get_col_num() as usize - 1;
         if col_idx < columns.len() {
-            columns[col_idx] = col.get_width().clone();
+            columns[col_idx] = *col.get_width();
         }
     }
     columns
@@ -35,7 +35,7 @@ pub fn get_row_heights(worksheet: &Worksheet, max_row: u32, default_height: f64)
     for row in worksheet.get_row_dimensions() {
         let row_idx = (*row.get_row_num() as usize) - 1;
         if row_idx < rows.len() {
-            rows[row_idx] = row.get_height().clone();
+            rows[row_idx] = *row.get_height();
         }
     }
     rows
