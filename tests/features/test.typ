@@ -105,9 +105,9 @@
 
 // #xlsx-parser(read("./data/not_supported/uppercase.xlsx", encoding: none))
 
-== spreet
+// == spreet
 
-#import "@preview/spreet:0.1.0"
+// #import "@preview/spreet:0.1.0"
 
-#spreet-parser(spreet.decode(read("./data/default.ods", encoding: none)))
+// #spreet-parser(spreet.decode(read("./data/default.ods", encoding: none)))
 
