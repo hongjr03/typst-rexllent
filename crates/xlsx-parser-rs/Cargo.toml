@@ -1,6 +1,6 @@
 [package]
 name = "xlsx-parser-rs"
-version = "0.1.0"
+version = "0.3.2"
 authors = ["hongjr03 <hongjr03@gmail.com>"]
 edition = "2021"
 
@@ -10,10 +10,11 @@ crate-type = ["cdylib"]
 [features]
 
 [dependencies]
-umya-spreadsheet = { git = "https://github.com/sjfhsjfh/umya-spreadsheet.git", rev = "6810557942a3174ff484f970f7b643d10ba1a6e9", default-features = false }
-toml = "0.8.21"
+umya-spreadsheet = { git = "https://github.com/hongjr03/umya-spreadsheet.git", rev = "87244a3c95f3008f457a1d04cedb7612d792aea6", default-features = false }
+toml = "0.8.20"
 serde = { version = "1.0.219", features = ["derive"] }
 typst-wasm-protocol = "0.0.2"
+once_cell = "1.21.3"
 
 [profile.release]
 opt-level = "s"
