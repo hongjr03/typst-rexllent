@@ -53,24 +53,21 @@
 }
 
 // 辅助函数：创建单元格内容和样式
-#let create_cell_content(cell, formatted-cell, locale) = {
+#let create_cell_content(cell, formatted-cell) = {
   if not cell.keys().contains("style") or cell.style == none {
     return ({ }, cell.value)
   }
 
   let content = if (
-    // Self::String(_) => "s",
-    // Self::RichText(_) => "s",
-    // Self::Numeric(_) => "n",
-    // Self::Bool(_) => "b",
-    // Self::Error(_) => "e",
     formatted-cell and cell.format != "General" and cell.data_type == "n"
   ) {
-    format(
+    let formatted = format(
       cell.format,
-      float(cell.value),
-      (locale: locale),
+      cell.value,
     )
+
+    let color = format-color(cell.format, cell.value)
+    text(..if color != none { (fill: color) }, formatted)
   } else { cell.value }
   let style = cell.style
   let cell_args = (:)
@@ -109,21 +106,6 @@
     }
   }
 
-  if formatted-cell {
-    let format = cell.format
-    // replace every string wrapped by [] with its lower case, using regex
-    let regex = regex("\[(.*?)\]")
-    let format = format.replace(
-      regex,
-      m => lower(m.text),
-    )
-
-    let color = format-color(format, cell.value)
-    if color != none {
-      cell_args.insert("fill", color)
-    }
-  }
-
   return (cell_args, content)
 }
 
@@ -134,7 +116,6 @@
   parse-table-style: true,
   parse-stroke: true,
   parse-formatted-cell: false,
-  locale: none,
   ..args,
 ) = {
   // 解析维度信息
@@ -205,7 +186,7 @@
           )
 
           // 处理样式和内容
-          let (_cell_args, content) = create_cell_content(cell, parse-formatted-cell, locale)
+          let (_cell_args, content) = create_cell_content(cell, parse-formatted-cell)
           cell_args += _cell_args
           if row.row_number == 1 and parse-header {
             header_cells.push(table.cell(..cell_args)[#content])
@@ -220,7 +201,7 @@
       // 处理普通单元格
       let cell = cell_map.at(str(col), default: none)
       if cell != none {
-        let (_cell_args, content) = create_cell_content(cell, parse-formatted-cell, locale)
+        let (_cell_args, content) = create_cell_content(cell, parse-formatted-cell)
         if row.row_number == 1 and parse-header {
           header_cells.push(table.cell(.._cell_args)[#content])
         } else {
@@ -297,7 +278,6 @@
     parse-table-style: parse-table-style,
     parse-stroke: parse-stroke,
     parse-formatted-cell: parse-formatted-cell,
-    locale: locale,
     ..append-args,
   )
 }
