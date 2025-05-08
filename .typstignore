@@ -2,3 +2,4 @@ crates
 external
 examples
 tests
+build.sh
