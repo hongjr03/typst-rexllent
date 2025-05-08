@@ -1,7 +1,7 @@
 # 🦖 ReXLlenT
 
 [![Universe](https://img.shields.io/badge/dynamic/xml?url=https%3A%2F%2Ftypst.app%2Funiverse%2Fpackage%2Frexllent&query=%2Fhtml%2Fbody%2Fdiv%2Fmain%2Fdiv%5B2%5D%2Faside%2Fsection%5B2%5D%2Fdl%2Fdd%5B3%5D&logo=typst&label=Universe&color=%2339cccc)](https://typst.app/universe/package/rexllent)
-[![GitHub](https://img.shields.io/badge/dynamic/toml?url=https%3A%2F%2Fraw.githubusercontent.com%2Fhongjr03%2Ftypst-rexllent%2Frefs%2Fheads%2Fmain%2Ftypst.toml&query=package.version&logo=GitHub&label=GitHub)](https://github.com/hongjr03/typst-rexllent)
+[![GitHub](https://img.shields.io/badge/dynamic/toml?url=https%3A%2F%2Fraw.githubusercontent.com%2Fhongjr03%2Ftypst-rexllent%2Frefs%2Fheads%2Fmain%2Ftypst-package%2Ftypst.toml&query=package.version&logo=GitHub&label=GitHub)](https://github.com/hongjr03/typst-rexllent)
 [![Test](https://github.com/hongjr03/typst-rexllent/actions/workflows/test.yml/badge.svg)](https://github.com/hongjr03/typst-rexllent/actions/workflows/test.yml)
 
 ReXLlenT is a typst package that helps you:
@@ -14,7 +14,7 @@ ReXLlenT is a typst package that helps you:
 Start by importing the package:
 
 ```typ
-#import "@preview/rexllent:0.3.1": xlsx-parser
+#import "@preview/rexllent:0.3.2": xlsx-parser
 ```
 
 Then you can use `xlsx-parser` function to convert your xlsx Excel table to typst table. Here is an example:
@@ -66,7 +66,7 @@ You can also convert Spreet parsed tables to typst tables. Here is an example:
 
 ```typ
 #import "@preview/spreet:0.1.0"
-#import "@preview/rexllent:0.3.1": spreet-parser
+#import "@preview/rexllent:0.3.2": spreet-parser
 
 #spreet-parser(spreet.decode(read("/tests/data/default.ods", encoding: none)))
 ```
