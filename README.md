@@ -37,6 +37,7 @@ By toggling parameters below, you can customize the output table:
 - `parse-fill`: Parse cell fill, default is `true`.
 - `parse-font`: Parse font style, default is `true`.
 - `parse-header`: Parse header row, default is `false`.
+- `parse-formatted-cell`: Parse formatted cell, default is `false`. Notice that this will cause great performance loss so don't use it unless you need it.
 
 > [!NOTE]
 > Notice that 0pt height or 0pt width will be parsed as `auto`. Disable `parse-table-style` to prevent this behavior and set the width and height manually.
@@ -139,6 +140,7 @@ ReXLlenT is still in development and PRs are welcome. Here are some TODOs (also 
 
 - [lublak/typst-spreet-package](https://github.com/lublak/typst-spreet-package)
 - [MathNya/umya-spreadsheet](https://github.com/MathNya/umya-spreadsheet)
+- [borgar/numfmt](https://github.com/borgar/numfmt)
 
 ## License
 
