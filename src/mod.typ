@@ -53,7 +53,7 @@
 }
 
 // 辅助函数：创建单元格内容和样式
-#let create_cell_content(cell, formatted-cell) = {
+#let create_cell_content(cell, formatted-cell, eval-as-markup: false) = {
   if not cell.keys().contains("style") or cell.style == none {
     return ({ }, cell.value)
   }
@@ -68,7 +68,11 @@
 
     let color = format-color(cell.format, cell.value)
     text(..if color != none { (fill: color) }, formatted)
-  } else { cell.value }
+  } else if eval-as-markup {
+    eval(cell.value, mode: "markup")
+  } else {
+    cell.value
+  }
   let style = cell.style
   let cell_args = (:)
 
@@ -116,6 +120,7 @@
   parse-table-style: true,
   parse-stroke: true,
   parse-formatted-cell: false,
+  eval-as-markup: false,
   ..args,
 ) = {
   // 解析维度信息
@@ -186,7 +191,7 @@
           )
 
           // 处理样式和内容
-          let (_cell_args, content) = create_cell_content(cell, parse-formatted-cell)
+          let (_cell_args, content) = create_cell_content(cell, parse-formatted-cell, eval-as-markup: eval-as-markup)
           cell_args += _cell_args
           if row.row_number == 1 and parse-header {
             header_cells.push(table.cell(..cell_args)[#content])
@@ -201,7 +206,7 @@
       // 处理普通单元格
       let cell = cell_map.at(str(col), default: none)
       if cell != none {
-        let (_cell_args, content) = create_cell_content(cell, parse-formatted-cell)
+        let (_cell_args, content) = create_cell_content(cell, parse-formatted-cell, eval-as-markup: eval-as-markup)
         if row.row_number == 1 and parse-header {
           header_cells.push(table.cell(.._cell_args)[#content])
         } else {
@@ -255,6 +260,7 @@
   parse-font: true,
   parse-header: false,
   parse-formatted-cell: false,
+  eval-as-markup: false,
   locale: none,
   ..append-args,
 ) = {
@@ -278,6 +284,7 @@
     parse-table-style: parse-table-style,
     parse-stroke: parse-stroke,
     parse-formatted-cell: parse-formatted-cell,
+    eval-as-markup: eval-as-markup,
     ..append-args,
   )
 }

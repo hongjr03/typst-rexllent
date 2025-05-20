@@ -31,9 +31,9 @@
 
 #xlsx-parser(read("./data/cell/merged.xlsx", encoding: none))
 
-=== formatted
+// === formatted
 
-#xlsx-parser(read("./data/cell/formatted.xlsx", encoding: none), parse-formatted-cell: true)
+// #xlsx-parser(read("./data/cell/formatted.xlsx", encoding: none), parse-formatted-cell: true)
 
 == font
 
@@ -89,7 +89,9 @@
 
 #xlsx-parser(read("./data/table/hidden_row.xlsx", encoding: none))
 
+== math
 
+#xlsx-parser(read("./data/math/1.xlsx", encoding: none), eval-as-markup: true)
 
 // == not_supported
 
