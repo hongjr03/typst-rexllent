@@ -31,9 +31,9 @@
 
 #xlsx-parser(read("./data/cell/merged.xlsx", encoding: none))
 
-// === formatted
+=== formatted
 
-// #xlsx-parser(read("./data/cell/formatted.xlsx", encoding: none), parse-formatted-cell: true)
+#xlsx-parser(read("./data/cell/formatted.xlsx", encoding: none), parse-formatted-cell: true)
 
 == font
 
