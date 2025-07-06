@@ -1,3 +1,0 @@
-[submodule "external/numfmt"]
-	path = external/numfmt
-	url = https://github.com/borgar/numfmt.git
