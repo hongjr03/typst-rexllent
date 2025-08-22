@@ -54,10 +54,6 @@
 
 // 辅助函数：创建单元格内容和样式
 #let create_cell_content(cell, formatted-cell, eval-as-markup: false) = {
-  if not cell.keys().contains("style") or cell.style == none {
-    return ({ }, cell.value)
-  }
-
   let content = if (
     formatted-cell and cell.format != "General" and cell.data_type == "n"
   ) {
@@ -73,6 +69,12 @@
   } else {
     cell.value
   }
+
+  // should produce content first, otherwise the eval-as-markup won't work
+  if not cell.keys().contains("style") or cell.style == none {
+    return ({}, content)
+  }
+
   let style = cell.style
   let cell_args = (:)
 
