@@ -978,7 +978,7 @@ dependencies = [
 
 [[package]]
 name = "xlsx-parser-rs"
-version = "0.3.3"
+version = "0.3.4"
 dependencies = [
  "once_cell",
  "serde",
