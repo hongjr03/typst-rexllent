@@ -40,8 +40,7 @@ By toggling parameters below, you can customize the output table:
 - `parse-formatted-cell`: Parse formatted cell, default is `false`. Notice that this will cause great performance loss so don't use it unless you need it.
 - `eval-as-markup`: Evaluate cell content as typst markup, default is `false`.
 
-> [!NOTE]
-> Notice that 0pt height or 0pt width will be parsed as `auto`. Disable `parse-table-style` to prevent this behavior and set the width and height manually.
+_Notice that 0pt height or 0pt width will be parsed as `auto`. Disable `parse-table-style` to prevent this behavior and set the width and height manually._
 
 Extra arguments passed to `xlsx-parser` function will be passed to `table`. Feel free to customize the output table. For the prepend elements(for example: header, hline) you should pass them as array to `prepend-elems` parameter.
 
@@ -68,7 +67,7 @@ You can also convert Spreet parsed tables to typst tables. Here is an example:
 
 ```typ
 #import "@preview/spreet:0.1.0"
-#import "@preview/rexllent:0.3.4": spreet-parser
+#import "@preview/rexllent:0.4.0": spreet-parser
 
 #spreet-parser(spreet.decode(read("/tests/data/default.ods", encoding: none)))
 ```
