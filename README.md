@@ -14,7 +14,7 @@ ReXLlenT is a typst package that helps you:
 Start by importing the package:
 
 ```typ
-#import "@preview/rexllent:0.3.4": xlsx-parser
+#import "@preview/rexllent:0.4.0": xlsx-parser
 ```
 
 Then you can use `xlsx-parser` function to convert your xlsx Excel table to typst table. Here is an example:
