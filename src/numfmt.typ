@@ -1,11 +1,12 @@
-#let numfmt = plugin("numfmt.wasm")
+#let numfmt = plugin("numfmt_rs.wasm")
+// #dictionary(numfmt)
 
-#let format(..args, opt: (:)) = {
-  str(numfmt.format(..args.pos().map(x => bytes({ str(x) })), bytes(json.encode(opt))))
+#let format(format, value, opt: (:)) = {
+  str(numfmt.format(bytes(format), bytes(str(value)), bytes(json.encode(opt))))
 }
 
-#let format-color(..args) = {
-  let color = str(numfmt.format-color(..args.pos().map(x => bytes(str(x)))))
+#let format-color(format, value) = {
+  let color = json(numfmt.format-color(bytes(format), bytes(str(value))))
 
   // https://www.excelsupersite.com/what-are-the-56-colorindex-colors-in-excel/
   let color-map = (
@@ -66,7 +67,18 @@
     "color55": rgb(51, 51, 153),
     "color56": rgb(51, 51, 51),
   )
-  color-map.at(color, default: eval(color))
+
+  if (color == none) {
+    return color
+  }
+  if (color.type == "string") {
+    let result = color-map.at(lower(color.value))
+    if (result == none) {
+      rgb(color.value)
+    } else {
+      result
+    }
+  }
 }
 
 // #numfmt.get-locale()
@@ -79,4 +91,4 @@
 // #format("[$-F800]dddd\,\ mmmm\ dd\,\ yyy", 3290.1278435, opt: (locale: "zh-CN"))
 // #format("[>=100]\"A\"0;[<=-100]\"B\"0;\"C\"0", 6.3)
 
-// #format-color("[blue]0;[green]-0;[magenta]0;[cyan]@", 0)
+// #format-color("[color 0]0", 0)
