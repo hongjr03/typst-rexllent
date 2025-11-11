@@ -63,6 +63,10 @@
 
 #xlsx-parser(read("./data/index/1.xlsx", encoding: none), sheet-index: 1)
 
+=== sheet name
+
+#xlsx-parser(read("./data/index/1.xlsx", encoding: none), sheet-name: "Sheet2")
+
 == table
 
 === column_width

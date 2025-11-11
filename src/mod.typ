@@ -243,6 +243,7 @@
 /// - xlsx (bytes): Pass the xlsx file content by `read("path/to/file.xlsx", encoding: none)`.
 /// - prepend-elems (array): Arguments to be prepended to the table.
 /// - sheet-index (integer): The index of the sheet to be parsed.
+/// - sheet-name (string): The name of the sheet to be parsed (alternative to sheet-index).
 /// - parse-table-style (boolean): Whether to parse the table style(like column width and row height).
 /// - parse-alignment (boolean): Whether to parse the cell alignment.
 /// - parse-stroke (boolean): Whether to parse the cell border.
@@ -255,6 +256,7 @@
   xlsx,
   prepend-elems: (),
   sheet-index: 0,
+  sheet-name: none,
   parse-table-style: true,
   parse-alignment: true,
   parse-stroke: true,
@@ -269,6 +271,7 @@
   let data = p.to_typst(
     xlsx,
     bytes(str(sheet-index)),
+    bytes(if sheet-name != none { sheet-name } else { "" }),
     bytes(if parse-alignment { "true" } else { "false" }),
     bytes(if parse-stroke { "true" } else { "false" }),
     bytes(if parse-fill { "true" } else { "false" }),
@@ -295,15 +298,22 @@
 ///
 /// - dict (dictionary): spreet parsed table.
 /// - sheet-index (integer): The index of the sheet to be parsed.
+/// - sheet-name (string): The name of the sheet to be parsed (alternative to sheet-index).
 /// - args (arguments): Other arguments for the table.
 /// ->
 #let spreet-parser(
   dict,
   sheet-index: 0,
+  sheet-name: none,
   ..args,
 ) = {
   let sheets = dict.keys()
-  let cells = dict.at(sheets.at(sheet-index))
+  let sheet_index = if sheet-name != none {
+    sheets.position(s => s == sheet-name)
+  } else {
+    sheet-index
+  }
+  let cells = dict.at(sheets.at(sheet_index))
   let columns = cells.first().len()
   table(
     columns: columns,
