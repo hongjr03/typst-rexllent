@@ -19,7 +19,32 @@ pub fn get_table_dimensions(worksheet: &Worksheet) -> Result<(u32, u32), String>
     Ok((max_col, max_row))
 }
 
-pub fn get_column_widths(worksheet: &Worksheet, max_col: u32, default_width: f64) -> Vec<f64> {
+pub fn get_column_widths(
+    worksheet: &Worksheet,
+    max_col: u32,
+    default_width: f64,
+    column_mapping: Option<&Vec<u32>>,
+) -> Vec<f64> {
+    if let Some(mapping) = column_mapping {
+        // Return widths only for selected columns
+        let all_widths = get_all_column_widths(worksheet, max_col, default_width);
+        mapping
+            .iter()
+            .map(|&col_num| {
+                let idx = (col_num - 1) as usize;
+                if idx < all_widths.len() {
+                    all_widths[idx]
+                } else {
+                    default_width
+                }
+            })
+            .collect()
+    } else {
+        get_all_column_widths(worksheet, max_col, default_width)
+    }
+}
+
+fn get_all_column_widths(worksheet: &Worksheet, max_col: u32, default_width: f64) -> Vec<f64> {
     let mut columns = vec![default_width; max_col as usize];
     for col in worksheet.get_column_dimensions() {
         let col_idx = *col.get_col_num() as usize - 1;

@@ -22,6 +22,7 @@ pub fn to_typst(
     parse_border: &[u8],
     parse_bg_color: &[u8],
     parse_font_style: &[u8],
+    columns: &[u8],
 ) -> Result<String, String> {
     // Parse arguments from byte arrays
     let sheet_index_str =
@@ -32,6 +33,15 @@ pub fn to_typst(
     let parse_border = parse_arg::<bool>(parse_border, "parse_border")?;
     let parse_bg_color = parse_arg::<bool>(parse_bg_color, "parse_bg_color")?;
     let parse_font_style = parse_arg::<bool>(parse_font_style, "parse_font_style")?;
+    let columns_str =
+        str::from_utf8(columns).map_err(|e| format!("Failed to parse columns: {}", e))?;
+
+    // Parse columns if provided
+    let selected_columns = if columns_str.is_empty() {
+        None
+    } else {
+        Some(parse_columns(columns_str)?)
+    };
 
     // Read Excel file
     let file = Cursor::new(bytes);
@@ -57,6 +67,7 @@ pub fn to_typst(
         parse_border,
         parse_bg_color,
         parse_font_style,
+        selected_columns.as_ref(),
     )?;
 
     // Convert to TOML
@@ -77,6 +88,36 @@ where
         .map_err(|e| format!("Failed to parse {}: {}", arg_name, e))
 }
 
+// Parse columns specification like "A,C,F" into column numbers
+fn parse_columns(columns_str: &str) -> Result<Vec<u32>, String> {
+    let mut columns = Vec::new();
+    for col in columns_str.split(',') {
+        let col = col.trim();
+        if col.is_empty() {
+            continue;
+        }
+        let col_num = column_name_to_number(col)?;
+        columns.push(col_num);
+    }
+    Ok(columns)
+}
+
+// Convert Excel column name (A, B, AA, etc.) to column number (1, 2, 27, etc.)
+fn column_name_to_number(name: &str) -> Result<u32, String> {
+    let mut result: u32 = 0;
+    for c in name.chars() {
+        if !c.is_ascii_alphabetic() {
+            return Err(format!("Invalid column name: {}", name));
+        }
+        let c = c.to_ascii_uppercase();
+        result = result * 26 + (c as u32 - 'A' as u32 + 1);
+    }
+    if result == 0 {
+        return Err(format!("Invalid column name: {}", name));
+    }
+    Ok(result)
+}
+
 // Function to build the table data structure
 fn build_table_data(
     worksheet: &umya_spreadsheet::Worksheet,
@@ -85,14 +126,24 @@ fn build_table_data(
     parse_border: bool,
     parse_bg_color: bool,
     parse_font_style: bool,
+    selected_columns: Option<&Vec<u32>>,
 ) -> Result<TableData, String> {
     let (max_col, max_row) = get_table_dimensions(worksheet)?;
+
+    // Filter columns if specified
+    let (effective_max_col, column_mapping) = if let Some(cols) = selected_columns {
+        let _max_selected = cols.iter().max().copied().unwrap_or(max_col);
+        let mapping: Vec<u32> = cols.clone();
+        (mapping.len() as u32, Some(mapping))
+    } else {
+        (max_col, None)
+    };
 
     let mut table_data = TableData {
         dimensions: TableDimensions {
             columns: Vec::new(),
             rows: Vec::new(),
-            max_columns: Some(max_col),
+            max_columns: Some(effective_max_col),
             max_rows: Some(max_row),
         },
         rows: Vec::new(),
@@ -101,8 +152,12 @@ fn build_table_data(
 
     // Process table dimensions
     let properties = worksheet.get_sheet_format_properties();
-    table_data.dimensions.columns =
-        get_column_widths(worksheet, max_col, *properties.get_default_column_width());
+    table_data.dimensions.columns = get_column_widths(
+        worksheet,
+        max_col,
+        *properties.get_default_column_width(),
+        column_mapping.as_ref(),
+    );
     table_data.dimensions.rows =
         get_row_heights(worksheet, max_row, *properties.get_default_row_height());
 
@@ -137,6 +192,8 @@ fn build_table_data(
         parse_border,
         parse_bg_color,
         parse_font_style,
+        selected_columns,
+        &column_mapping,
     )?;
 
     Ok(table_data)
@@ -153,6 +210,8 @@ fn process_rows(
     parse_border: bool,
     parse_bg_color: bool,
     parse_font_style: bool,
+    _selected_columns: Option<&Vec<u32>>,
+    column_mapping: &Option<Vec<u32>>,
 ) -> Result<(), String> {
     for row_num in 1..=max_row {
         let row = worksheet.get_collection_by_row(&row_num);
@@ -168,29 +227,70 @@ fn process_rows(
             col_cell_map[(col_num - 1) as usize] = Some(cell);
         }
 
-        // Process each column
-        for col_num in 1..=max_col {
-            // Check if it's a merged cell
-            let is_merged = is_merged_cell(table_data, row_num, col_num);
+        // Process columns based on mapping
+        if let Some(mapping) = column_mapping {
+            // Selected columns mode: map to new column indices
+            for (new_col_idx, &orig_col_num) in mapping.iter().enumerate() {
+                let new_col_num = (new_col_idx + 1) as u32;
 
-            if !is_merged {
-                if let Some(Some(cell)) = col_cell_map.get((col_num - 1) as usize) {
-                    let cell_style = create_cell_style(
-                        cell,
-                        book,
-                        parse_alignment,
-                        parse_border,
-                        parse_bg_color,
-                        parse_font_style,
-                    );
+                // Check if it's a merged cell
+                let is_merged = is_merged_cell(table_data, row_num, orig_col_num);
 
-                    row_data.cells.push(CellData {
-                        data_type: cell_type(cell)?,
-                        format: cell_format_code(cell)?,
-                        value: cell_value(cell)?,
-                        column: col_num,
-                        style: cell_style,
-                    });
+                if !is_merged {
+                    if let Some(Some(cell)) = col_cell_map.get((orig_col_num - 1) as usize) {
+                        let cell_style = create_cell_style(
+                            cell,
+                            book,
+                            parse_alignment,
+                            parse_border,
+                            parse_bg_color,
+                            parse_font_style,
+                        );
+
+                        row_data.cells.push(CellData {
+                            data_type: cell_type(cell)?,
+                            format: cell_format_code(cell)?,
+                            value: cell_value(cell)?,
+                            column: new_col_num,
+                            style: cell_style,
+                        });
+                    } else {
+                        // Empty cell for selected column
+                        row_data.cells.push(CellData {
+                            data_type: "str".to_string(),
+                            format: "General".to_string(),
+                            value: "".to_string(),
+                            column: new_col_num,
+                            style: None,
+                        });
+                    }
+                }
+            }
+        } else {
+            // Normal mode: process all columns
+            for col_num in 1..=max_col {
+                // Check if it's a merged cell
+                let is_merged = is_merged_cell(table_data, row_num, col_num);
+
+                if !is_merged {
+                    if let Some(Some(cell)) = col_cell_map.get((col_num - 1) as usize) {
+                        let cell_style = create_cell_style(
+                            cell,
+                            book,
+                            parse_alignment,
+                            parse_border,
+                            parse_bg_color,
+                            parse_font_style,
+                        );
+
+                        row_data.cells.push(CellData {
+                            data_type: cell_type(cell)?,
+                            format: cell_format_code(cell)?,
+                            value: cell_value(cell)?,
+                            column: col_num,
+                            style: cell_style,
+                        });
+                    }
                 }
             }
         }

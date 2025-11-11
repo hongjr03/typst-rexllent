@@ -244,6 +244,7 @@
 /// - prepend-elems (array): Arguments to be prepended to the table.
 /// - sheet-index (integer): The index of the sheet to be parsed.
 /// - sheet-name (string): The name of the sheet to be parsed (alternative to sheet-index).
+/// - selected-cols (string): Comma-separated list of columns to include (e.g., "A,C,F").
 /// - parse-table-style (boolean): Whether to parse the table style(like column width and row height).
 /// - parse-alignment (boolean): Whether to parse the cell alignment.
 /// - parse-stroke (boolean): Whether to parse the cell border.
@@ -257,6 +258,7 @@
   prepend-elems: (),
   sheet-index: 0,
   sheet-name: none,
+  selected-cols: none,
   parse-table-style: true,
   parse-alignment: true,
   parse-stroke: true,
@@ -268,6 +270,15 @@
   locale: none,
   ..append-args,
 ) = {
+  // Convert columns to string if it's an array
+  let columns_str = if type(selected-cols) == array {
+    selected-cols.map(str).join(",")
+  } else if selected-cols != none {
+    str(selected-cols)
+  } else {
+    ""
+  }
+
   let data = p.to_typst(
     xlsx,
     bytes(str(sheet-index)),
@@ -276,6 +287,7 @@
     bytes(if parse-stroke { "true" } else { "false" }),
     bytes(if parse-fill { "true" } else { "false" }),
     bytes(if parse-font { "true" } else { "false" }),
+    bytes(columns_str),
   )
   // toml(data)
   parse_excel_table(
