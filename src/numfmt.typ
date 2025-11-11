@@ -1,4 +1,4 @@
-#let numfmt = plugin("numfmt_rs.wasm")
+#let numfmt = plugin("numfmt.wasm")
 // #dictionary(numfmt)
 
 #let format(format, value, opt: (:)) = {
