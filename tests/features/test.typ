@@ -67,6 +67,12 @@
 
 #xlsx-parser(read("./data/index/1.xlsx", encoding: none), sheet-name: "Sheet2")
 
+== columns
+
+=== select columns
+
+#(xlsx-parser(read("./data/index/1.xlsx", encoding: none), selected-cols: ("A", "B")))
+
 == table
 
 === column_width
