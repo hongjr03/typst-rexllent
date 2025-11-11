@@ -17,13 +17,17 @@ use worksheet_utils::*;
 pub fn to_typst(
     bytes: &[u8],
     sheet_index: &[u8],
+    sheet_name: &[u8],
     parse_alignment: &[u8],
     parse_border: &[u8],
     parse_bg_color: &[u8],
     parse_font_style: &[u8],
 ) -> Result<String, String> {
     // Parse arguments from byte arrays
-    let sheet_index = parse_arg::<usize>(sheet_index, "sheet index")?;
+    let sheet_index_str =
+        str::from_utf8(sheet_index).map_err(|e| format!("Failed to parse sheet index: {}", e))?;
+    let sheet_name_str =
+        str::from_utf8(sheet_name).map_err(|e| format!("Failed to parse sheet name: {}", e))?;
     let parse_alignment = parse_arg::<bool>(parse_alignment, "parse_alignment")?;
     let parse_border = parse_arg::<bool>(parse_border, "parse_border")?;
     let parse_bg_color = parse_arg::<bool>(parse_bg_color, "parse_bg_color")?;
@@ -34,9 +38,16 @@ pub fn to_typst(
     let book: Spreadsheet = reader::xlsx::read_reader(file, true)
         .map_err(|e| format!("Failed to read Excel file: {}", e))?;
 
-    let worksheet = book
-        .get_sheet(&sheet_index)
-        .ok_or_else(|| "Failed to get worksheet".to_string())?;
+    let worksheet = if !sheet_name_str.is_empty() {
+        book.get_sheet_by_name(sheet_name_str)
+            .ok_or_else(|| format!("Failed to get worksheet by name: {}", sheet_name_str))?
+    } else {
+        let index = sheet_index_str
+            .parse::<usize>()
+            .map_err(|_| format!("Invalid sheet index: {}", sheet_index_str))?;
+        book.get_sheet(&index)
+            .ok_or_else(|| format!("Failed to get worksheet by index: {}", index))?
+    };
 
     // Build table data
     let table_data = build_table_data(
