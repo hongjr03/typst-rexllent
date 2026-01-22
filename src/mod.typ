@@ -21,8 +21,8 @@
   let text_args = (:)
   if font.bold { text_args.insert("weight", "bold") }
   if font.italic { text_args.insert("style", "italic") }
-  if font.size != none { text_args.insert("size", to-size(font.size, "pt")) }
-  if font.color != none { text_args.insert("fill", to-rgb(font.color)) }
+  if font.at("size", default: none) != none { text_args.insert("size", to-size(font.size, "pt")) }
+  if font.at("color", default: none) != none { text_args.insert("fill", to-rgb(font.color)) }
 
   let styled = text(..text_args)[#content]
 
@@ -79,7 +79,7 @@
   let cell_args = (:)
 
   // 处理字体样式
-  if style.keys().contains("font") and style.font != none {
+  if style.at("font", default: none) != none {
     content = apply-text-style(content, style.font)
   }
 
@@ -92,7 +92,7 @@
   }
 
   // 处理边框
-  if style.keys().contains("border") and style.border != none {
+  if style.at("border", default: none) != none {
     let stroke_args = (:)
     for (border, value) in style.border {
       if value == false {
@@ -132,7 +132,7 @@
   let table_args = (:)
 
   // 设置列宽和行高
-  if dims.columns != none and dims.rows != none {
+  if dims.at("columns", default: none) != none and dims.at("rows", default: none) != none {
     let columns = dims.columns.map(c => if c != 0.0 { eval(str(c * 0.1) + "in") } else { auto })
     let rows = dims.rows.map(r => if r != 0.0 { eval(str(r) + "pt") } else { auto })
     if parse-table-style {
