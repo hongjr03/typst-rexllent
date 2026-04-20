@@ -1,8 +1,8 @@
 # 🦖 ReXLlenT
 
-[![Universe](https://img.shields.io/badge/dynamic/xml?url=https%3A%2F%2Ftypst.app%2Funiverse%2Fpackage%2Frexllent&query=%2Fhtml%2Fbody%2Fdiv%2Fmain%2Fdiv%5B2%5D%2Faside%2Fsection%5B2%5D%2Fdl%2Fdd%5B3%5D&logo=typst&label=Universe&color=%2339cccc)](https://typst.app/universe/package/rexllent)
-[![GitHub](https://img.shields.io/badge/dynamic/toml?url=https%3A%2F%2Fraw.githubusercontent.com%2Fhongjr03%2Ftypst-rexllent%2Frefs%2Fheads%2Fmain%2Ftypst.toml&query=package.version&logo=GitHub&label=GitHub)](https://github.com/hongjr03/typst-rexllent)
-[![Test](https://github.com/hongjr03/typst-rexllent/actions/workflows/test.yml/badge.svg)](https://github.com/hongjr03/typst-rexllent/actions/workflows/test.yml)
+[![Universe badge](https://img.shields.io/badge/dynamic/xml?url=https%3A%2F%2Ftypst.app%2Funiverse%2Fpackage%2Frexllent&query=%2Fhtml%2Fbody%2Fdiv%2Fmain%2Fdiv%5B2%5D%2Faside%2Fsection%5B2%2Fdl%2Fdd%5B3%5D&logo=typst&label=Universe&color=%2339cccc)](https://typst.app/universe/package/rexllent)
+[![GitHub repository badge](https://img.shields.io/badge/dynamic/toml?url=https%3A%2F%2Fraw.githubusercontent.com%2Fhongjr03%2Ftypst-rexllent%2Frefs%2Fheads%2Fmain%2Ftypst.toml&query=package.version&logo=GitHub&label=GitHub)](https://github.com/hongjr03/typst-rexllent)
+[![Test workflow badge](https://github.com/hongjr03/typst-rexllent/actions/workflows/test.yml/badge.svg)](https://github.com/hongjr03/typst-rexllent/actions/workflows/test.yml)
 
 ReXLlenT is a typst package that helps you:
 
@@ -99,23 +99,23 @@ Through this way, you can convert excel/opendocument spreadsheets to typst table
 
 - Typst Table (with `parse-alignment: false`)
 
-  ![Typst](assets/example3.png)
+  ![Typst table with alignment disabled](assets/example3.png)
 
 - Typst Table (with `parse-stroke: false`)
 
-  ![Typst](assets/example4.png)
+  ![Typst table with stroke disabled](assets/example4.png)
 
 - Typst Table (with `parse-fill: false`)
 
-  ![Typst](assets/example5.png)
+  ![Typst table with fill disabled](assets/example5.png)
 
 - Typst Table (with `parse-font: false`)
 
-  ![Typst](assets/example6.png)
+  ![Typst table with font styling disabled](assets/example6.png)
 
 - With Custom Style
 
-  ![Typst](assets/example7.png)
+  ![Typst table with custom styling](assets/example7.png)
 
 ## Pixel Art
 
@@ -123,24 +123,24 @@ You can also convert pixel art to typst table using ReXLlenT. Here are some exam
 
 - Typst Logo
 
-  ![typst](assets/typst_example1.png)
+  ![Typst logo rendered as a table](assets/typst_example1.png)
 
 - Typst Guy
 
-  ![typst_guy](assets/typst_example2.png)
+  ![Typst Guy rendered as a table](assets/typst_example2.png)
 
 - _Impression, soleil levant_
 
-  ![monet](assets/typst_example3.png)
+  ![Monet's Impression, soleil levant rendered as a table](assets/typst_example3.png)
 
 ## TODOs
 
 ReXLlenT is still in development and PRs are welcome. Here are some TODOs (also limitations):
 
-- [ ] Implement in-cell image parsing.
-- [ ] Prevent parsing errors caused by special characters.
-- [ ] Parse auto width and height instead of treating 0pt as auto.
-- [ ] Handle hidden rows and columns.
+- Implement in-cell image parsing.
+- Prevent parsing errors caused by special characters.
+- Parse auto width and height instead of treating 0pt as auto.
+- Handle hidden rows and columns.
 - ...
 
 ## Credits
