@@ -1,0 +1,141 @@
+name: Package, release, publish
+on:
+  push:
+    tags: [ v* ]
+
+env:
+  # the forge (host) at which the registry lies
+  # for Universe, this is Github (https://github.com)
+  REGISTRY_FORGE: https://github.com
+  # the repository hosting published packages
+  # this is cloned to ensure pull requests are based on the latest upstream commit
+  # for Universe, this is typst/packages (https://github.com/typst/packages/)
+  # the `secrets.REGISTRY_TOKEN` must be able to read from this repo
+  REGISTRY_REPO: typst/packages
+  # the repository to which to push the release version
+  # this should be a fork of the registry repo that you have push privileges to
+  # the `secrets.REGISTRY_TOKEN` must be able to push to this repo
+  REGISTRY_FORK: hongjr03/packages
+  # the path within the registry repo where the "<name>/<version>" directory should be put
+  # for Universe, this is packages/preview
+  PATH_PREFIX: packages/preview
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    outputs:
+      pkg-name: ${{ env.PKG_NAME }}
+      pkg-version: ${{ env.PKG_VERSION }}
+      pkg-id: ${{ env.PKG_NAME }}-${{ env.PKG_VERSION }}
+      git-user-name: ${{ env.GIT_USER_NAME }}
+      git-user-email: ${{ env.GIT_USER_EMAIL }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install just
+        uses: taiki-e/install-action@v2
+        with:
+          tool: just
+
+      - name: Determine and check package metadata
+        run: |
+          . scripts/setup
+          echo "PKG_NAME=${PKG_PREFIX}" >> "${GITHUB_ENV}"
+          echo "PKG_VERSION=${VERSION}" >> "${GITHUB_ENV}"
+
+          if [[ "${GITHUB_REF_NAME}" != "v${VERSION}" ]]; then
+            echo "package version ${VERSION} does not match release tag ${GITHUB_REF_NAME}" >&2
+            exit 1
+          fi
+
+          echo "GIT_USER_NAME=$(git log -1 --pretty=format:'%an')" >> "${GITHUB_ENV}"
+          echo "GIT_USER_EMAIL=$(git log -1 --pretty=format:'%ae')" >> "${GITHUB_ENV}"
+
+      - name: Create archives
+        run: |
+          just package out
+          mkdir dist
+          cd out
+          zip -r "../dist/${PKG_NAME}-${PKG_VERSION}.zip" "${PKG_NAME}"
+          # TODO create tar.gz with same contents as packages.typst.org
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.PKG_NAME }}-${{ env.PKG_VERSION }}
+          path: dist/*
+          retention-days: 3
+
+  release:
+    name: Create Release
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: ${{ needs.build.outputs.pkg-id }}
+
+      - name: Add artifacts to release
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: ${{ needs.build.outputs.pkg-id }}/*
+
+  publish:
+    name: Publish to a registry fork
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout package registry
+        uses: actions/checkout@v6
+        with:
+          github-server-url: ${{ env.REGISTRY_FORGE }}
+          repository: ${{ env.REGISTRY_REPO }}
+          token: ${{ secrets.REGISTRY_TOKEN }}
+          path: package-registry
+          sparse-checkout: ${{ env.PATH_PREFIX }}/${{ needs.build.outputs.pkg-name }}/${{ needs.build.outputs.pkg-version }}
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: ${{ needs.build.outputs.pkg-id }}
+
+      - name: Commit package release
+        env:
+          PKG_NAME: ${{ needs.build.outputs.pkg-name }}
+          PKG_VERSION: ${{ needs.build.outputs.pkg-version }}
+          PKG_ID: ${{ needs.build.outputs.pkg-id }}
+          GIT_USER_NAME: ${{ needs.build.outputs.git-user-name }}
+          GIT_USER_EMAIL: ${{ needs.build.outputs.git-user-email }}
+        run: |
+          unzip "${PKG_ID}/${PKG_ID}.zip" -d "${PKG_ID}"
+          mkdir -p "package-registry/${PATH_PREFIX}/${PKG_NAME}"
+          mv "${PKG_ID}/${PKG_NAME}/${PKG_VERSION}" "package-registry/${PATH_PREFIX}/${PKG_NAME}"
+          rmdir "${PKG_ID}/${PKG_NAME}"
+
+          cd package-registry
+          git config user.name "${GIT_USER_NAME}"
+          git config user.email "${GIT_USER_EMAIL}"
+          git checkout -b "${PKG_ID}"
+          git add .
+          git commit -m "${PKG_NAME}:${PKG_VERSION}"
+
+      - name: Push package release to the fork
+        env:
+          PKG_ID: ${{ needs.build.outputs.pkg-id }}
+        run: |
+          cd package-registry
+          git remote add fork "${REGISTRY_FORGE}/${REGISTRY_FORK}"
+
+          echo "NOTE: if the following command fails with"
+          echo '  "refusing to allow a Personal Access Token to create or update workflow'
+          echo '  `.github/workflows/deploy.yml` without `workflow` scope"'
+          echo "then you need to bring your fork's main branch up to date with the registry repo"
+          git push --force --set-upstream fork "${PKG_ID}"
