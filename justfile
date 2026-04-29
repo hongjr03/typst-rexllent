@@ -63,7 +63,21 @@ package target="@local":
     echo "Packaging $PKG_PREFIX v$VERSION to $TARGET"
     mkdir -p "$TARGET"
     
-    # 使用 rsync 复制所有需要打包的文件，排除不必要的文件和文件夹
-    rsync -a --exclude '.git' --exclude '.github' --exclude 'scripts' --exclude 'justfile' --exclude 'out' --exclude 'dist' ./ "$TARGET/"
+    rsync -a \
+      --exclude '.git' \
+      --exclude '.github' \
+      --exclude '.gitignore' \
+      --exclude '.gitmodules' \
+      --exclude '.typstignore' \
+      --exclude 'crates' \
+      --exclude 'dist' \
+      --exclude 'examples' \
+      --exclude 'out' \
+      --exclude 'scripts' \
+      --exclude 'target' \
+      --exclude 'tests' \
+      --exclude 'umya-spreadsheet' \
+      --exclude 'justfile' \
+      ./ "$TARGET/"
     
     echo "Successfully packaged to $TARGET"
