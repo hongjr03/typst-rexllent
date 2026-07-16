@@ -123,6 +123,7 @@
   parse-stroke: true,
   parse-formatted-cell: false,
   eval-as-markup: false,
+  header-args: (),
   ..args,
 ) = {
   // 解析维度信息
@@ -232,7 +233,7 @@
     prepend-elems = (prepend-elems,)
   }
   if parse-header {
-    table(..table_args, ..prepend-elems, table.header(..header_cells), ..cells, ..args)
+    table(..table_args, ..prepend-elems, table.header(..header-args, ..header_cells), ..cells, ..args)
   } else {
     table(..table_args, ..prepend-elems, ..cells, ..args)
   }
